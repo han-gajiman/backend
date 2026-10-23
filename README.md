@@ -35,9 +35,13 @@ Spring Boot 3.3.5 기반 한 가지만 백엔드 프로젝트입니다.
 
 ```json
 {
-  "status": "UP"
+  "success": true,
+  "data": { "status": "UP" },
+  "error": null
 }
 ```
+
+모든 API는 같은 형식(`success`, `data`, `error`)으로 응답합니다. 자세한 내용은 `docs/API명세서.md`를 참고하세요.
 
 ## 포트
 

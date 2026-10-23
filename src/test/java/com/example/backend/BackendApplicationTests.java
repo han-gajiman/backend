@@ -21,11 +21,12 @@ class BackendApplicationTests {
 
     @Test
     void healthEndpointReturnsUp() {
-        Map<String, String> response = restTemplate.getForObject(
+        Map<String, Object> response = restTemplate.getForObject(
                 "http://localhost:" + port + "/api/health",
                 Map.class
         );
 
-        assertThat(response).containsEntry("status", "UP");
+        assertThat(response).containsEntry("success", true);
+        assertThat(response).containsEntry("data", Map.of("status", "UP"));
     }
 }
