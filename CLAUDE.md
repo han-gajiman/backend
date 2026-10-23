@@ -50,6 +50,9 @@ com.hangajiman            (메인 클래스: HangajimanApplication)
 6. **회원 탈퇴**: 소셜 연결 끊기 → `DELETE FROM users`로 CASCADE 정리. `notifications.target_id`는 FK가 없으니 서비스 레이어에서 같이 정리하세요.
 7. **LLM**: 호출은 백엔드에서만 하고 API 키를 클라이언트에 노출하지 마세요. 타임아웃 5초, 1인 하루 10회, 실패하면 기본 추천 문구로 대체합니다. 소원 내용은 저장하지 않고 호출 시각만 `ai_suggestion_logs`에 남깁니다.
 8. **스키마 변경 금지**: ERD(`erd_final.sql`)에 없는 테이블·컬럼은 임의로 만들지 말고 먼저 물어보세요.
+   - 테이블은 Flyway(`src/main/resources/db/migration/`)로만 만듭니다. `V1__init.sql`은 `docs/erd_final.sql`과 같은 내용입니다.
+   - 이미 적용된 마이그레이션 파일은 수정하지 말고, 변경은 새 파일(`V3__설명.sql`)로 추가하세요. ERD 문서도 같이 고쳐야 합니다.
+   - JPA는 `ddl-auto=validate`입니다. 엔티티는 `BaseEntity`를 상속하고, 컬럼 타입·길이를 ERD와 맞추세요.
 
 ## 미결정 항목 🟡 — 임의 결정 금지
 - 다짐 기간 2주의 의미 (수정 가능 기간이면 `wishes.editable_until` 추가)
