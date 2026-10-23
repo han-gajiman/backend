@@ -1,4 +1,4 @@
-package com.example.backend.global.response;
+package com.hangajiman.global.response;
 
 /**
  * API 명세서 공통 응답 형식: { "success", "data", "error" }

@@ -21,7 +21,7 @@ Java 17 · Spring Boot 3.3.5 (모놀리식) · Gradle · Spring Data JPA · Spri
 
 ## 패키지 구조 (도메인별)
 ```
-com.example.backend
+com.hangajiman            (메인 클래스: HangajimanApplication)
 ├─ global/        공통 (응답 형식, 예외 처리, BaseEntity, 설정, Clock, 보안)
 │   ├─ response/   ApiResponse(공통 응답), PageResponse(페이지네이션)
 │   ├─ exception/  ErrorCode(API 명세서 에러 코드), BusinessException, GlobalExceptionHandler
@@ -38,7 +38,8 @@ com.example.backend
 ```
 - 도메인 안은 `controller / service / repository / domain(entity) / dto`로 나눕니다.
 - 응답은 API 명세서 형식(`{success, data, error}`)을 따릅니다. 컨트롤러는 `ApiResponse.ok(...)`를 반환하고, 실패는 `throw new BusinessException(ErrorCode.XXX)`로 처리합니다. 새 에러 코드는 API 명세서와 `ErrorCode`에 같이 추가하세요.
-- 🟡 base 패키지명(현재 `com.example.backend`는 임시), 도메인 간 호출 규칙(서비스끼리 직접 호출 vs 이벤트)은 미정입니다.
+- base 패키지는 `com.hangajiman`입니다. (결정됨 10/23)
+- 🟡 도메인 간 호출 규칙(서비스끼리 직접 호출 vs 이벤트)은 미정입니다.
 
 ## 반드시 지킬 규칙
 1. **시간**: `LocalDate.now()`, `Instant.now()`를 직접 쓰지 마세요. 주입된 `Clock`을 쓰세요. 시연용 시간 가속(DEMO-01)이 이 Clock을 바꾸는 방식이라, 직접 호출하면 시연이 깨집니다. 날짜 기준은 KST입니다.

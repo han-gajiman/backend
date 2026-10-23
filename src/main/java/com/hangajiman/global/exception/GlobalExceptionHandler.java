@@ -1,4 +1,4 @@
-package com.example.backend.global.exception;
+package com.hangajiman.global.exception;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -8,7 +8,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import com.example.backend.global.response.ApiResponse;
+import com.hangajiman.global.response.ApiResponse;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {

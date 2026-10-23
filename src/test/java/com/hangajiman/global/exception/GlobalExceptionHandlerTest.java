@@ -1,4 +1,4 @@
-package com.example.backend.global.exception;
+package com.hangajiman.global.exception;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;

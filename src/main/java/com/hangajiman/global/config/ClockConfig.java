@@ -1,4 +1,4 @@
-package com.example.backend.global.config;
+package com.hangajiman.global.config;
 
 import java.time.Clock;
 import java.time.ZoneId;

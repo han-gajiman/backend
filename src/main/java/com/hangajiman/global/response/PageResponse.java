@@ -1,4 +1,4 @@
-package com.example.backend.global.response;
+package com.hangajiman.global.response;
 
 import java.util.List;
 
