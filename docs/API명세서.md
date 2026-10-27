@@ -9,7 +9,7 @@
 | ID | Method | Endpoint | 설명 |
 | --- | --- | --- | --- |
 | AUTH-01 | POST | `/auth/kakao` 🔓 | 카카오 로그인/가입 |
-| AUTH-01 | POST | `/auth/apple` 🔓 | Apple 로그인/가입 (iOS) |
+| AUTH-01 | POST | `/auth/google` 🔓 | Google 로그인/가입 |
 | AUTH-03 | POST | `/auth/refresh` 🔓 | 토큰 재발급 |
 | AUTH-03 | POST | `/auth/logout` | 로그아웃 |
 | AUTH-02 | POST | `/users/me/onboarding` | 온보딩 (약관 동의 + 닉네임) |
@@ -55,7 +55,7 @@
 // 에러 코드
 401 AUTH_INVALID_TOKEN         Access Token 없음/만료 → /auth/refresh 시도
 401 AUTH_INVALID_REFRESH_TOKEN Refresh Token 만료/폐기 → 재로그인
-401 AUTH_SOCIAL_FAILED         카카오/Apple 토큰 검증 실패
+401 AUTH_SOCIAL_FAILED         카카오/Google 토큰 검증 실패
 403 ONBOARDING_REQUIRED        온보딩 미완료
 400 REQUIRED_AGREEMENT_MISSING 필수 약관 미동의
 403 LOCATION_CONSENT_REQUIRED  위치정보 미동의 상태에서 방문 인증
@@ -80,8 +80,8 @@
 ```json
 // POST /auth/kakao 🔓   앱의 카카오 SDK에서 받은 토큰을 서버가 검증
 { "accessToken": "카카오_액세스_토큰" }
-// POST /auth/apple 🔓   iOS Apple 로그인 identityToken을 서버가 검증
-{ "identityToken": "eyJraWQiOi..." }
+// POST /auth/google 🔓   앱의 Google 로그인에서 받은 ID 토큰을 서버가 검증 (10/27: Apple 대신 Google)
+{ "idToken": "eyJhbGciOiJSUzI1NiIs..." }
 // Response 200 (공통)
 { "accessToken": "eyJhbGciOi...", "refreshToken": "dGhpcyBpcyBh...",
   "isNewUser": true, "onboarded": false }
@@ -113,7 +113,7 @@
 { "agreed": true }   → 204
 
 // DELETE /users/me   즉시 삭제
-// 1) 카카오 연결 끊기 / Apple 토큰 해지  2) Refresh Token 폐기
+// 1) 카카오 연결 끊기 / Google 토큰 해지  2) Refresh Token 폐기
 // 3) 본인 데이터·친구 관계·작성한 응원·관련 알림 삭제
 → 204
 ```

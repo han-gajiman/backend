@@ -9,7 +9,7 @@
 -- 회원
 CREATE TABLE users (
   id                 BIGSERIAL PRIMARY KEY,
-  provider           VARCHAR(20)  NOT NULL CHECK (provider IN ('KAKAO','APPLE')),
+  provider           VARCHAR(20)  NOT NULL CHECK (provider IN ('KAKAO','GOOGLE')),  -- [변경 10/27] Apple 제외, Google 추가 (V3 마이그레이션)
   provider_user_id   VARCHAR(100) NOT NULL,                -- 소셜 회원 고유 ID
   nickname           VARCHAR(30),                          -- 온보딩에서 설정
   profile_image_url  VARCHAR(500),
