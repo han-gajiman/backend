@@ -1,9 +1,19 @@
 # backend
 
 한 가지만(2026 단디톤) 백엔드입니다.
+소원 하나를 정하고, 30일 동안 매일 돌을 쌓으며 실천하고, 경북 명소를 방문해 이어가는 서비스입니다.
 
 - 개발 규칙: `CLAUDE.md`
-- 기능·API·ERD 기준 문서: `docs/`
+- 기준 문서: `docs/기능명세서.md` · `docs/API명세서.md` · `docs/erd_final.sql`
+
+## 구현 현황
+
+| 기능 ID | API | 인증 | 상태 |
+| --- | --- | --- | --- |
+| - | `GET /api/health` | 불필요 | ✅ |
+| SPOT-01 | `GET /api/v1/spots?category=` 명소 목록 (category 생략 시 전체) | 불필요 | ✅ |
+
+나머지 기능은 기능명세서 P0 → P1 → P2 순서로 추가합니다.
 
 ## 기술 스택
 
@@ -31,6 +41,7 @@ createdb hangajiman_test   # 테스트용
 export DB_URL=jdbc:postgresql://localhost:5432/hangajiman
 export DB_USERNAME=postgres
 export DB_PASSWORD=비밀번호
+export TEST_DB_URL=jdbc:postgresql://localhost:5432/hangajiman_test   # 테스트 DB
 ```
 
 ## 실행
