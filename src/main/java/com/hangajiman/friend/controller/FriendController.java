@@ -3,15 +3,19 @@ package com.hangajiman.friend.controller;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.hangajiman.friend.dto.FriendResponse;
 import com.hangajiman.friend.dto.InviteAcceptResponse;
 import com.hangajiman.friend.dto.InviteResponse;
 import com.hangajiman.friend.service.FriendService;
 import com.hangajiman.global.response.ApiResponse;
+import com.hangajiman.global.response.PageResponse;
 
 @RestController
 @RequestMapping("/api/v1/friends")
@@ -21,6 +25,14 @@ public class FriendController {
 
     public FriendController(FriendService friendService) {
         this.friendService = friendService;
+    }
+
+    // FRIEND-02 GET /friends?page=0&size=20 📄
+    @GetMapping
+    public ApiResponse<PageResponse<FriendResponse>> getFriends(@AuthenticationPrincipal Long userId,
+                                                                @RequestParam(defaultValue = "0") int page,
+                                                                @RequestParam(defaultValue = "20") int size) {
+        return ApiResponse.ok(friendService.getFriends(userId, page, size));
     }
 
     // FRIEND-01 POST /friends/invites → 201

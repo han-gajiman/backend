@@ -4,15 +4,24 @@ import java.security.SecureRandom;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Slice;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.hangajiman.friend.domain.FriendInvite;
 import com.hangajiman.friend.domain.Friendship;
+import com.hangajiman.friend.dto.FriendResponse;
 import com.hangajiman.friend.dto.InviteAcceptResponse;
 import com.hangajiman.friend.dto.InviteResponse;
 import com.hangajiman.friend.repository.FriendInviteRepository;
@@ -20,8 +29,12 @@ import com.hangajiman.friend.repository.FriendshipRepository;
 import com.hangajiman.global.config.ClockConfig;
 import com.hangajiman.global.exception.BusinessException;
 import com.hangajiman.global.exception.ErrorCode;
+import com.hangajiman.global.response.PageResponse;
 import com.hangajiman.user.domain.User;
 import com.hangajiman.user.repository.UserRepository;
+import com.hangajiman.wish.domain.Visibility;
+import com.hangajiman.wish.domain.Wish;
+import com.hangajiman.wish.domain.WishStatus;
 
 @Service
 @Transactional(readOnly = true)
@@ -89,6 +102,47 @@ public class FriendService {
             throw new BusinessException(ErrorCode.FRIEND_ALREADY);
         }
         return new InviteAcceptResponse(inviterId, inviter.getNickname());
+    }
+
+    /**
+     * FRIEND-02 친구 목록 + 돌탑 요약 (최근에 친구가 된 순).
+     * 돌탑 요약은 친구의 진행 중(ACTIVE) 돌탑이 친구 공개(FRIENDS)일 때만 보여줍니다.
+     */
+    public PageResponse<FriendResponse> getFriends(Long userId, int page, int size) {
+        Slice<Friendship> friendships = friendshipRepository.findByUserId(userId,
+                PageResponse.pageable(page, size, Sort.by(Sort.Direction.DESC, "id")));
+        List<Long> friendIds = friendships.getContent().stream().map(Friendship::getFriendId).toList();
+        if (friendIds.isEmpty()) {
+            return new PageResponse<>(List.of(), friendships.getNumber(), friendships.getSize(), friendships.hasNext());
+        }
+
+        Map<Long, User> users = userRepository.findAllById(friendIds).stream()
+                .collect(Collectors.toMap(User::getId, Function.identity()));
+        Map<Long, Wish> visibleWishes = friendshipRepository.findWishesOf(friendIds, WishStatus.ACTIVE).stream()
+                .filter(wish -> wish.getVisibility() == Visibility.FRIENDS)
+                .collect(Collectors.toMap(Wish::getUserId, Function.identity()));
+
+        List<Long> wishIds = visibleWishes.values().stream().map(Wish::getId).toList();
+        Map<Long, Long> stoneCounts = wishIds.isEmpty() ? Map.of()
+                : friendshipRepository.countStones(wishIds).stream()
+                        .collect(Collectors.toMap(FriendshipRepository.WishStoneCount::getWishId,
+                                FriendshipRepository.WishStoneCount::getStoneCount));
+        Set<Long> stonedToday = wishIds.isEmpty() ? Set.of()
+                : Set.copyOf(friendshipRepository.findWishIdsStonedOn(wishIds, LocalDate.now(clock)));
+
+        List<FriendResponse> content = friendIds.stream()
+                .filter(users::containsKey)
+                .map(friendId -> {
+                    Wish wish = visibleWishes.get(friendId);
+                    FriendResponse.WishSummary summary = wish == null ? null : new FriendResponse.WishSummary(
+                            wish.getId(),
+                            wish.getContent(),
+                            stoneCounts.getOrDefault(wish.getId(), 0L),
+                            stonedToday.contains(wish.getId()));
+                    return new FriendResponse(friendId, users.get(friendId).getNickname(), summary);
+                })
+                .toList();
+        return new PageResponse<>(content, friendships.getNumber(), friendships.getSize(), friendships.hasNext());
     }
 
     private String newInviteCode() {
