@@ -3,6 +3,7 @@ package com.hangajiman.wish.dto;
 import java.time.LocalDate;
 
 import com.hangajiman.wish.domain.Visibility;
+import com.hangajiman.wish.domain.WishResult;
 import com.hangajiman.wish.domain.WishStatus;
 
 import jakarta.validation.constraints.NotBlank;
@@ -46,5 +47,21 @@ public final class WishDtos {
 
     // visited=false → backgroundImageUrl null → 프론트는 허허벌판 기본 배경
     public record SpotSummary(Long id, String name, String category, boolean visited, String backgroundImageUrl) {
+    }
+
+    // POST /wishes/{wishId}/reflection. 한 줄 회고는 비워도 됩니다.
+    public record ReflectionRequest(@NotNull WishResult result, @Size(max = 200) String reflection) {
+    }
+
+    // GET /wishes?round=1 항목 (회차별 완성 돌탑, 최대 12개)
+    public record WishSummary(
+            Long wishId,
+            String content,
+            LocalDate startDate,
+            long stoneCount,
+            String spotName,
+            boolean visited,
+            WishResult result // 회고 전(COMPLETED)이면 null
+    ) {
     }
 }

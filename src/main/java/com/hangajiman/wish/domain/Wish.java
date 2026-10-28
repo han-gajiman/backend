@@ -111,6 +111,18 @@ public class Wish extends BaseEntity {
         return this.userId.equals(userId);
     }
 
+    // 30일이 지나 회고할 수 있는 상태인지. 스케줄러가 아직 COMPLETED로 바꾸기 전이어도 종료일이 지났으면 가능
+    public boolean isReflectableOn(LocalDate today) {
+        return status == WishStatus.COMPLETED || (status == WishStatus.ACTIVE && today.isAfter(endDate));
+    }
+
+    // TOWER-02 완성 회고 → CLOSED. 상태 확인은 서비스에서 합니다.
+    public void close(WishResult result, String reflection) {
+        this.status = WishStatus.CLOSED;
+        this.result = result;
+        this.reflection = reflection;
+    }
+
     public Long getId() {
         return id;
     }

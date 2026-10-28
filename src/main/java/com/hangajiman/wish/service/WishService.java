@@ -2,6 +2,10 @@ package com.hangajiman.wish.service;
 
 import java.time.Clock;
 import java.time.LocalDate;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
@@ -12,14 +16,18 @@ import com.hangajiman.global.exception.ErrorCode;
 import com.hangajiman.spot.domain.Spot;
 import com.hangajiman.spot.repository.SpotRepository;
 import com.hangajiman.stone.repository.StoneRepository;
+import com.hangajiman.stone.repository.StoneRepository.StoneCount;
 import com.hangajiman.user.domain.User;
 import com.hangajiman.user.service.UserService;
 import com.hangajiman.wish.domain.Visibility;
 import com.hangajiman.wish.domain.Wish;
+import com.hangajiman.wish.domain.WishStatus;
 import com.hangajiman.wish.dto.WishDtos.CreateWishRequest;
 import com.hangajiman.wish.dto.WishDtos.CreateWishResponse;
 import com.hangajiman.wish.dto.WishDtos.CurrentWishResponse;
+import com.hangajiman.wish.dto.WishDtos.ReflectionRequest;
 import com.hangajiman.wish.dto.WishDtos.SpotSummary;
+import com.hangajiman.wish.dto.WishDtos.WishSummary;
 import com.hangajiman.wish.repository.WishRepository;
 
 @Service
@@ -68,6 +76,57 @@ public class WishService {
             throw new BusinessException(ErrorCode.WISH_ALREADY_ACTIVE);
         }
         return new CreateWishResponse(wish.getId(), wish.getStartDate(), wish.getEndDate());
+    }
+
+    /**
+     * TOWER-02 완성 회고 → CLOSED. 30일이 지난 돌탑만 (아니면 403 TOWER_NOT_COMPLETED).
+     * 회고 후에는 진행 중 돌탑이 없어져 새 소원을 시작할 수 있습니다.
+     */
+    @Transactional
+    public void reflect(Long userId, Long wishId, ReflectionRequest request) {
+        Wish wish = wishRepository.findById(wishId)
+                .filter(w -> w.isOwnedBy(userId))
+                .orElseThrow(() -> new BusinessException(ErrorCode.WISH_NOT_OWNER));
+        if (wish.getStatus() == WishStatus.CLOSED) {
+            throw new BusinessException(ErrorCode.TOWER_NOT_COMPLETED, "이미 회고를 남긴 돌탑이에요.");
+        }
+        if (!wish.isReflectableOn(LocalDate.now(clock))) {
+            throw new BusinessException(ErrorCode.TOWER_NOT_COMPLETED);
+        }
+
+        String reflection = request.reflection() == null || request.reflection().isBlank()
+                ? null : request.reflection().trim();
+        wish.close(request.result(), reflection);
+    }
+
+    /**
+     * TOWER-03 회차별 돌탑 모아보기. 첫 돌탑 시작일부터 1년 = 1회차, 완성일 기준 배정 (최대 12개).
+     * round를 생략하면 현재 회차. 진행 중(ACTIVE) 돌탑은 빼고 완성(COMPLETED)·회고 완료(CLOSED)만 보여줍니다.
+     */
+    public List<WishSummary> getCollection(Long userId, Integer round) {
+        if (round != null && round < 1) {
+            throw new BusinessException(ErrorCode.INVALID_INPUT, "회차는 1부터예요.");
+        }
+        int targetRound = round != null ? round : userService.getUser(userId).roundOf(LocalDate.now(clock));
+        List<Wish> wishes = wishRepository.findByUserIdAndRoundAndStatusInOrderByStartDateAsc(
+                userId, targetRound, List.of(WishStatus.COMPLETED, WishStatus.CLOSED));
+        if (wishes.isEmpty()) {
+            return List.of();
+        }
+
+        List<Long> wishIds = wishes.stream().map(Wish::getId).toList();
+        Map<Long, Long> stoneCounts = stoneRepository.countByWishIds(wishIds).stream()
+                .collect(Collectors.toMap(StoneCount::getWishId, StoneCount::getStoneCount));
+        Set<Long> visited = Set.copyOf(wishRepository.findVisitedWishIds(wishIds));
+        Map<Long, String> spotNames = spotRepository.findAllById(
+                        wishes.stream().map(Wish::getSpotId).distinct().toList()).stream()
+                .collect(Collectors.toMap(Spot::getId, Spot::getName));
+
+        return wishes.stream()
+                .map(w -> new WishSummary(w.getId(), w.getContent(), w.getStartDate(),
+                        stoneCounts.getOrDefault(w.getId(), 0L), spotNames.get(w.getSpotId()),
+                        visited.contains(w.getId()), w.getResult()))
+                .toList();
     }
 
     // GET /wishes/current. 진행 중(ACTIVE/COMPLETED) 돌탑이 없으면 null

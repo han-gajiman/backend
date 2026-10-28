@@ -23,6 +23,14 @@ public interface WishRepository extends JpaRepository<Wish, Long> {
 
     boolean existsByUserIdAndStatusIn(Long userId, Collection<WishStatus> statuses);
 
+    // TOWER-03 회차별 완성 돌탑 (COMPLETED·CLOSED), 시작일 순
+    List<Wish> findByUserIdAndRoundAndStatusInOrderByStartDateAsc(Long userId, int round,
+                                                                    Collection<WishStatus> statuses);
+
+    // 여러 돌탑 중 명소 방문 인증을 한 돌탑 id
+    @Query(value = "SELECT DISTINCT wish_id FROM spot_visits WHERE wish_id IN (:wishIds)", nativeQuery = true)
+    List<Long> findVisitedWishIds(@Param("wishIds") Collection<Long> wishIds);
+
     // 이 돌탑으로 명소 방문 인증을 했는지 (배경 해금). spot_visits는 SPOT-03에서 채워집니다.
     @Query(value = "SELECT EXISTS (SELECT 1 FROM spot_visits WHERE wish_id = :wishId)", nativeQuery = true)
     boolean existsSpotVisit(@Param("wishId") Long wishId);

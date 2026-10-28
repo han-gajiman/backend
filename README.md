@@ -24,6 +24,8 @@
 | STONE-01 | `POST /api/v1/wishes/{wishId}/stones` 오늘의 돌 (하루 1개) | 필요 | ✅ |
 | STONE-01 | `GET /api/v1/wishes/{wishId}/stones?page=&size=` 돌 목록 (최신순, 본인·친구 공개) | 필요 | ✅ |
 | TOWER-01 | 30일 완성 처리 (매시간 자동, 완성 알림 생성) | - | ✅ |
+| TOWER-02 | `POST /api/v1/wishes/{wishId}/reflection` 완성 회고 (→ CLOSED, 새 소원 가능) | 필요 | ✅ |
+| TOWER-03 | `GET /api/v1/wishes?round=` 회차별 돌탑 모아보기 (생략 시 현재 회차) | 필요 | ✅ |
 | DEMO-01 | `POST /api/v1/demo/time-travel` 시연용 시간 이동 (`local`·`demo` 프로필 전용) | 필요 | ✅ |
 | - | `GET /api/v1/dev/token?userId=` 개발용 토큰 (`local` 프로필 전용) | 불필요 | ✅ |
 
