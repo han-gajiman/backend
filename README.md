@@ -28,6 +28,7 @@
 | TOWER-03 | `GET /api/v1/wishes?round=` 회차별 돌탑 모아보기 (생략 시 현재 회차) | 필요 | ✅ |
 | DEMO-01 | `POST /api/v1/demo/time-travel` 시연용 시간 이동 (`local`·`demo` 프로필 전용) | 필요 | ✅ |
 | - | `GET /api/v1/dev/token?userId=` 개발용 토큰 (`local` 프로필 전용) | 불필요 | ✅ |
+| - | `POST /api/v1/dev/login { devKey }` 개발용 로그인·자동 가입, 실제와 같은 Access/Refresh Token (`local` 전용) | 불필요 | ✅ |
 
 - 온보딩 전에는 위 회원 API·로그인·로그아웃·탈퇴만 쓸 수 있고, 나머지는 `403 ONBOARDING_REQUIRED`입니다.
 - 나머지 기능은 기능명세서 P0 → P1 → P2 순서로 추가합니다.
@@ -83,6 +84,11 @@ curl -H "Authorization: Bearer {토큰}" -H "Content-Type: application/json" \
   -d '{"nickname":"소원지기","agreements":{"terms":true,"privacy":true,"location":false},"agreementVersion":"1.0"}' \
   localhost:8080/api/v1/users/me/onboarding
 ```
+
+### 프론트(웹)에서 로컬 서버 부르기
+
+`local` 프로필은 `localhost` 모든 포트의 브라우저 요청(CORS)을 허용합니다(`application-local.properties`). 폰 앱은 CORS와 상관없습니다.
+배포 서버에서 웹 출처를 허용해야 하면 `cors.allowed-origins`에 쉼표로 적습니다. (기본: 허용 안 함)
 
 ### 시연용 시간 이동 (DEMO-01)
 
