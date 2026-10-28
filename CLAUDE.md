@@ -43,6 +43,7 @@ com.hangajiman            (메인 클래스: HangajimanApplication)
 
 ## 반드시 지킬 규칙
 1. **시간**: `LocalDate.now()`, `Instant.now()`를 직접 쓰지 마세요. 주입된 `Clock`을 쓰세요. 시연용 시간 가속(DEMO-01)이 이 Clock을 바꾸는 방식이라, 직접 호출하면 시연이 깨집니다. 날짜 기준은 KST입니다.
+   - 기본 `Clock`(`DemoClock`)은 서비스 날짜용이고 시간 이동을 따라갑니다. **토큰 만료처럼 실제 시간이어야 하는 곳만** `@Qualifier(ClockConfig.SYSTEM_CLOCK)`을 씁니다. (토큰이 시간 이동을 따라가면 이동하는 순간 전부 만료되어 시연이 끊깁니다)
 2. **소원 수정 불가**: `wishes.content`, `wishes.action_goal`을 바꾸는 API를 만들지 마세요. 취소도 없습니다.
 3. **하루 1개**: 돌은 `UNIQUE(wish_id, stone_date)`로 보장하고, 서비스에서도 검증하세요. 돌 개수는 `COUNT(*)`로 셉니다.
 4. **위치정보**: 사용자 좌표는 거리 계산에만 쓰고 **저장하지 않습니다**(`spot_visits.distance_m`만 저장). `LOCATION` 동의가 없으면 방문 인증을 거부하세요.

@@ -209,6 +209,15 @@ class WishControllerTest {
     }
 
     @Test
+    void timeTravelDoesNotExistOutsideLocalOrDemoProfile() throws Exception {
+        User user = onboardedUser();
+
+        mockMvc.perform(as(user, post("/api/v1/demo/time-travel")).content("{\"days\": 30}"))
+                .andExpect(status().is4xxClientError());
+        mockMvc.perform(as(user, get("/api/v1/wishes/current"))).andExpect(status().isOk());
+    }
+
+    @Test
     void requiresOnboarding() throws Exception {
         User user = userRepository.saveAndFlush(User.create(SocialProvider.KAKAO, "not-onboarded", null));
 

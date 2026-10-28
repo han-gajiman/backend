@@ -23,6 +23,10 @@
 | - | `GET /api/v1/wishes/current` 진행 중 돌탑 | 필요 | ✅ |
 | STONE-01 | `POST /api/v1/wishes/{wishId}/stones` 오늘의 돌 (하루 1개) | 필요 | ✅ |
 | STONE-01 | `GET /api/v1/wishes/{wishId}/stones?page=&size=` 돌 목록 (최신순, 본인·친구 공개) | 필요 | ✅ |
+| TOWER-01 | 30일 완성 처리 (매시간 자동, 완성 알림 생성) | - | ✅ |
+| TOWER-02 | `POST /api/v1/wishes/{wishId}/reflection` 완성 회고 (→ CLOSED, 새 소원 가능) | 필요 | ✅ |
+| TOWER-03 | `GET /api/v1/wishes?round=` 회차별 돌탑 모아보기 (생략 시 현재 회차) | 필요 | ✅ |
+| DEMO-01 | `POST /api/v1/demo/time-travel` 시연용 시간 이동 (`local`·`demo` 프로필 전용) | 필요 | ✅ |
 | FRIEND-01 | `POST /api/v1/friends/invites` 초대 링크 생성, `POST /api/v1/friends/invites/{inviteCode}/accept` 초대 수락 | 필요 | ✅ |
 | FRIEND-02 | `GET /api/v1/friends?page=&size=` 친구 목록 + 돌탑 요약 | 필요 | ✅ |
 | FRIEND-03 | `POST`·`GET /api/v1/wishes/{wishId}/cheers` 응원 작성·목록 | 필요 | ✅ (알림함 저장까지, 푸시 발송은 NOTI-01) |
@@ -83,6 +87,19 @@ curl -H "Authorization: Bearer {토큰}" -H "Content-Type: application/json" \
   -d '{"nickname":"소원지기","agreements":{"terms":true,"privacy":true,"location":false},"agreementVersion":"1.0"}' \
   localhost:8080/api/v1/users/me/onboarding
 ```
+
+### 시연용 시간 이동 (DEMO-01)
+
+시연 서버는 `--spring.profiles.active=demo`로 실행합니다. (운영 프로필에는 이 API가 없습니다)
+
+```bash
+curl -H "Authorization: Bearer {토큰}" -H "Content-Type: application/json" \
+  -d '{"days": 30}' localhost:8080/api/v1/demo/time-travel
+# → { "serverNow": "2026-11-27T..." }  30일 지난 돌탑은 바로 완성(COMPLETED) 처리
+```
+
+- 서버 전체의 서비스 날짜가 함께 움직입니다. 로그인 토큰은 실제 시간 기준이라 만료되지 않습니다.
+- 이동한 시간은 메모리에만 있어서 **서버를 다시 켜면 실제 시간으로 돌아옵니다.** (리허설 후 초기화할 때)
 
 ### 환경변수
 

@@ -1,18 +1,24 @@
 package com.hangajiman.wish.controller;
 
+import java.util.List;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.hangajiman.global.response.ApiResponse;
 import com.hangajiman.wish.dto.WishDtos.CreateWishRequest;
 import com.hangajiman.wish.dto.WishDtos.CreateWishResponse;
 import com.hangajiman.wish.dto.WishDtos.CurrentWishResponse;
+import com.hangajiman.wish.dto.WishDtos.ReflectionRequest;
+import com.hangajiman.wish.dto.WishDtos.WishSummary;
 import com.hangajiman.wish.service.WishService;
 
 import jakarta.validation.Valid;
@@ -38,5 +44,20 @@ public class WishController {
     @GetMapping("/current")
     public ApiResponse<CurrentWishResponse> getCurrent(@AuthenticationPrincipal Long userId) {
         return ApiResponse.ok(wishService.getCurrent(userId));
+    }
+
+    // TOWER-02 POST /wishes/{wishId}/reflection → 204 (COMPLETED → CLOSED)
+    @PostMapping("/{wishId}/reflection")
+    public ResponseEntity<Void> reflect(@AuthenticationPrincipal Long userId, @PathVariable Long wishId,
+                                        @Valid @RequestBody ReflectionRequest request) {
+        wishService.reflect(userId, wishId, request);
+        return ResponseEntity.noContent().build();
+    }
+
+    // TOWER-03 GET /wishes?round=1 — round 생략 시 현재 회차 (최대 12개라 페이지 없음)
+    @GetMapping
+    public ApiResponse<List<WishSummary>> getCollection(@AuthenticationPrincipal Long userId,
+                                                        @RequestParam(required = false) Integer round) {
+        return ApiResponse.ok(wishService.getCollection(userId, round));
     }
 }
