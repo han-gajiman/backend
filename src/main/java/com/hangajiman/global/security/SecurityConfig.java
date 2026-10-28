@@ -2,6 +2,7 @@ package com.hangajiman.global.security;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -20,6 +21,7 @@ public class SecurityConfig {
             "/api/v1/spots",
             "/api/v1/spots/**",
             "/api/v1/dev/token", // local 프로필에서만 컨트롤러가 등록됨
+            "/api/v1/dev/login", // local 프로필 전용 (소셜 SDK 없이 실제 토큰 발급)
             "/error"
     };
 
@@ -35,6 +37,7 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
                 .csrf(AbstractHttpConfigurer::disable)
+                .cors(Customizer.withDefaults()) // 허용 목록은 CorsConfig (기본은 아무것도 허용 안 함)
                 .formLogin(AbstractHttpConfigurer::disable)
                 .httpBasic(AbstractHttpConfigurer::disable)
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
