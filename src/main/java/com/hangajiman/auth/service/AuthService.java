@@ -68,6 +68,14 @@ public class AuthService {
         return login(SocialProvider.GOOGLE, googleClient.verifyIdToken(idToken));
     }
 
+    /**
+     * 로컬 개발 전용 (DevAuthController, local 프로필). 카카오·Google SDK 없이 실제 로그인과 같은 토큰을 받습니다.
+     * devKey가 같으면 같은 회원입니다. 카카오 회원번호 자리에 "dev-{devKey}"를 씁니다.
+     */
+    public LoginResponse loginForDev(String devKey) {
+        return login(SocialProvider.KAKAO, new SocialProfile("dev-" + devKey, null));
+    }
+
     private LoginResponse login(SocialProvider provider, SocialProfile profile) {
         Optional<User> existing = userRepository.findByProviderAndProviderUserId(provider, profile.providerUserId());
         User user = existing.orElseGet(() -> userRepository.save(

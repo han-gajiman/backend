@@ -20,6 +20,7 @@ public class SecurityConfig {
             "/api/v1/spots",
             "/api/v1/spots/**",
             "/api/v1/dev/token", // local 프로필에서만 컨트롤러가 등록됨
+            "/api/v1/dev/login", // local 프로필 전용 (소셜 SDK 없이 실제 토큰 발급)
             "/error"
     };
 
