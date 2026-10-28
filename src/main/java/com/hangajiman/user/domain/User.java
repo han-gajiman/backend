@@ -2,6 +2,7 @@ package com.hangajiman.user.domain;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 
 import com.hangajiman.global.entity.BaseEntity;
 
@@ -20,6 +21,8 @@ import jakarta.persistence.Table;
 @Entity
 @Table(name = "users")
 public class User extends BaseEntity {
+
+    public static final int DAYS_PER_ROUND = 365;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -77,6 +80,22 @@ public class User extends BaseEntity {
         if (journeyStartedOn == null) {
             journeyStartedOn = startDate;
         }
+    }
+
+    /**
+     * date가 속한 회차. 첫 돌탑 시작일부터 365일 = 1회차 (ERD wishes.round와 같은 공식).
+     * 돌탑을 시작한 적이 없으면 1.
+     */
+    public int roundOf(LocalDate date) {
+        if (journeyStartedOn == null) {
+            return 1;
+        }
+        return (int) (ChronoUnit.DAYS.between(journeyStartedOn, date) / DAYS_PER_ROUND) + 1;
+    }
+
+    // round회차 회고 알림 날짜 = 시작일 + 365일 × round
+    public LocalDate reviewDateOf(int round) {
+        return journeyStartedOn == null ? null : journeyStartedOn.plusDays((long) DAYS_PER_ROUND * round);
     }
 
     public void updatePushToken(String pushToken) {
