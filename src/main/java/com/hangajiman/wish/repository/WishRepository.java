@@ -23,4 +23,9 @@ public interface WishRepository extends JpaRepository<Wish, Long> {
     // 이 돌탑으로 명소 방문 인증을 했는지 (배경 해금). spot_visits는 SPOT-03에서 채워집니다.
     @Query(value = "SELECT EXISTS (SELECT 1 FROM spot_visits WHERE wish_id = :wishId)", nativeQuery = true)
     boolean existsSpotVisit(@Param("wishId") Long wishId);
+
+    // viewer가 owner의 친구인지. friendships는 FRIEND-01에서 채워집니다(수락 시 양방향 2행).
+    @Query(value = "SELECT EXISTS (SELECT 1 FROM friendships WHERE user_id = :viewerId AND friend_id = :ownerId)",
+            nativeQuery = true)
+    boolean areFriends(@Param("viewerId") Long viewerId, @Param("ownerId") Long ownerId);
 }

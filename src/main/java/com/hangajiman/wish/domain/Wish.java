@@ -102,6 +102,15 @@ public class Wish extends BaseEntity {
         return TOWER_DAYS - dayIndexOn(today);
     }
 
+    // 돌을 쌓을 수 있는지: 진행 중이고 날짜가 기간 안 (스케줄러가 아직 안 돌았어도 기간 밖이면 불가)
+    public boolean isStackableOn(LocalDate date) {
+        return status == WishStatus.ACTIVE && !date.isBefore(startDate) && !date.isAfter(endDate);
+    }
+
+    public boolean isOwnedBy(Long userId) {
+        return this.userId.equals(userId);
+    }
+
     public Long getId() {
         return id;
     }

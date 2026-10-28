@@ -21,6 +21,8 @@
 | AUTH-06 | `DELETE /api/v1/users/me` 회원 탈퇴 | 필요 | ✅ |
 | WISH-03 | `POST /api/v1/wishes` 소원 등록 (돌탑 시작) | 필요 | ✅ |
 | - | `GET /api/v1/wishes/current` 진행 중 돌탑 | 필요 | ✅ |
+| STONE-01 | `POST /api/v1/wishes/{wishId}/stones` 오늘의 돌 (하루 1개) | 필요 | ✅ |
+| STONE-01 | `GET /api/v1/wishes/{wishId}/stones?page=&size=` 돌 목록 (최신순, 본인·친구 공개) | 필요 | ✅ |
 | - | `GET /api/v1/dev/token?userId=` 개발용 토큰 (`local` 프로필 전용) | 불필요 | ✅ |
 
 - 온보딩 전에는 위 회원 API·로그인·로그아웃·탈퇴만 쓸 수 있고, 나머지는 `403 ONBOARDING_REQUIRED`입니다.
@@ -114,7 +116,7 @@ src/main/java/com/hangajiman/
 ├── user/     회원, 온보딩, 동의 이력, 내 정보
 ├── spot/     명소
 ├── wish/     소원(돌탑)
-├── stone/    돌 (엔티티, API는 STONE-01에서 추가)
+├── stone/    돌 (오늘의 돌, 돌 목록)
 └── (friend, notification, ai 순서대로 추가 예정)
 src/main/resources/
 ├── application.properties
