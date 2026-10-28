@@ -18,6 +18,7 @@ public enum ErrorCode {
     REQUIRED_AGREEMENT_MISSING(HttpStatus.BAD_REQUEST, "필수 약관에 동의해 주세요."),
     LOCATION_CONSENT_REQUIRED(HttpStatus.FORBIDDEN, "위치정보 이용에 동의해 주세요."),
 
+    WISH_NOT_FOUND(HttpStatus.NOT_FOUND, "돌탑을 찾을 수 없어요."),
     WISH_ALREADY_ACTIVE(HttpStatus.CONFLICT, "이미 진행 중인 돌탑이 있어요."),
     WISH_NOT_OWNER(HttpStatus.FORBIDDEN, "본인의 돌탑이 아니에요."),
     WISH_NOT_ACTIVE(HttpStatus.BAD_REQUEST, "진행 중인 돌탑이 아니에요."),

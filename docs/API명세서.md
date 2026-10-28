@@ -59,6 +59,7 @@
 403 ONBOARDING_REQUIRED        온보딩 미완료
 400 REQUIRED_AGREEMENT_MISSING 필수 약관 미동의
 403 LOCATION_CONSENT_REQUIRED  위치정보 미동의 상태에서 방문 인증
+404 WISH_NOT_FOUND             없는 돌탑
 409 WISH_ALREADY_ACTIVE        진행 중 돌탑이 있는데 새로 등록
 403 WISH_NOT_OWNER             본인 돌탑 아님
 400 WISH_NOT_ACTIVE            기간 끝난 돌탑에 돌 쌓기
@@ -208,9 +209,12 @@
   "page": 0, "size": 20, "hasNext": false }
 
 // POST /wishes/{wishId}/cheers   친구(친구 공개 돌탑) 또는 익명 소원지기만, 작성 시 푸시
+// 진행 중(ACTIVE) 돌탑만. 본인 돌탑·친구 아님·비공개 → 403 CHEER_NOT_ALLOWED, 끝난 돌탑 → 400 WISH_NOT_ACTIVE
+// 앞뒤 공백 제거 후 1~100자 (빈 문자열 400 INVALID_INPUT, 초과 400 CHEER_TOO_LONG)
 { "message": "오늘도 하나 쌓자!" }   → 201 { "cheerId": 7 }
 
-// GET /wishes/{wishId}/cheers?page=0&size=20 📄   익명이면 writerNickname null
+// GET /wishes/{wishId}/cheers?page=0&size=20 📄   익명이면 writerNickname null, 최신순
+// 돌탑 주인 또는 친구 공개 돌탑의 친구만 (그 외 403 CHEER_NOT_ALLOWED)
 { "content": [ { "cheerId": 7, "writerNickname": "지기", "isAnonymous": false,
                  "message": "오늘도 하나 쌓자!", "createdAt": "..." } ],
   "page": 0, "size": 20, "hasNext": false }
