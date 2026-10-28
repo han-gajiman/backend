@@ -3,11 +3,12 @@ package com.hangajiman.global.exception;
 import org.springframework.http.HttpStatus;
 
 /**
- * API 명세서 에러 코드 목록. INVALID_INPUT, INTERNAL_ERROR는 명세서에 없는 공통 코드라 따로 추가했습니다.
+ * API 명세서 에러 코드 목록. INVALID_INPUT, NOT_FOUND, INTERNAL_ERROR는 명세서에 없는 공통 코드라 따로 추가했습니다.
  */
 public enum ErrorCode {
 
     INVALID_INPUT(HttpStatus.BAD_REQUEST, "요청 값이 올바르지 않아요."),
+    NOT_FOUND(HttpStatus.NOT_FOUND, "요청한 주소를 찾을 수 없어요."),
     INTERNAL_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "잠시 후 다시 시도해 주세요."),
 
     AUTH_INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "로그인이 필요해요."),

@@ -1,0 +1,132 @@
+package com.hangajiman.auth.service;
+
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.time.Clock;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.Base64;
+import java.util.HexFormat;
+import java.util.Optional;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.hangajiman.auth.domain.RefreshToken;
+import com.hangajiman.auth.dto.AuthDtos.LoginResponse;
+import com.hangajiman.auth.dto.AuthDtos.TokenResponse;
+import com.hangajiman.auth.repository.RefreshTokenRepository;
+import com.hangajiman.auth.social.GoogleClient;
+import com.hangajiman.auth.social.KakaoClient;
+import com.hangajiman.auth.social.SocialProfile;
+import com.hangajiman.global.exception.BusinessException;
+import com.hangajiman.global.exception.ErrorCode;
+import com.hangajiman.global.security.JwtProvider;
+import com.hangajiman.user.domain.SocialProvider;
+import com.hangajiman.user.domain.User;
+import com.hangajiman.user.repository.UserRepository;
+
+@Service
+@Transactional
+public class AuthService {
+
+    private static final SecureRandom RANDOM = new SecureRandom();
+
+    private final KakaoClient kakaoClient;
+    private final GoogleClient googleClient;
+    private final UserRepository userRepository;
+    private final RefreshTokenRepository refreshTokenRepository;
+    private final JwtProvider jwtProvider;
+    private final Clock clock;
+    private final Duration refreshTokenTtl;
+
+    public AuthService(KakaoClient kakaoClient, GoogleClient googleClient, UserRepository userRepository,
+                       RefreshTokenRepository refreshTokenRepository, JwtProvider jwtProvider, Clock clock,
+                       @Value("${jwt.refresh-exp-days}") long refreshExpDays) {
+        this.kakaoClient = kakaoClient;
+        this.googleClient = googleClient;
+        this.userRepository = userRepository;
+        this.refreshTokenRepository = refreshTokenRepository;
+        this.jwtProvider = jwtProvider;
+        this.clock = clock;
+        this.refreshTokenTtl = Duration.ofDays(refreshExpDays);
+    }
+
+    // AUTH-01 카카오 로그인 / 최초 로그인 시 자동 가입
+    public LoginResponse loginWithKakao(String kakaoAccessToken) {
+        return login(SocialProvider.KAKAO, kakaoClient.getProfile(kakaoAccessToken));
+    }
+
+    // AUTH-01 Google 로그인 / 최초 로그인 시 자동 가입
+    public LoginResponse loginWithGoogle(String idToken) {
+        return login(SocialProvider.GOOGLE, googleClient.verifyIdToken(idToken));
+    }
+
+    private LoginResponse login(SocialProvider provider, SocialProfile profile) {
+        Optional<User> existing = userRepository.findByProviderAndProviderUserId(provider, profile.providerUserId());
+        User user = existing.orElseGet(() -> userRepository.save(
+                User.create(provider, profile.providerUserId(), profile.profileImageUrl())));
+
+        TokenResponse tokens = issueTokens(user.getId());
+        return new LoginResponse(tokens.accessToken(), tokens.refreshToken(), existing.isEmpty(), user.isOnboarded());
+    }
+
+    // AUTH-03 재발급: 기존 Refresh Token은 폐기하고 새로 발급(교체). 만료된 토큰도 지운 뒤 401
+    @Transactional(noRollbackFor = BusinessException.class)
+    public TokenResponse refresh(String refreshToken) {
+        RefreshToken saved = refreshTokenRepository.findByTokenHash(hash(refreshToken))
+                .orElseThrow(() -> new BusinessException(ErrorCode.AUTH_INVALID_REFRESH_TOKEN));
+        refreshTokenRepository.delete(saved);
+        if (saved.isExpired(clock.instant())) {
+            throw new BusinessException(ErrorCode.AUTH_INVALID_REFRESH_TOKEN);
+        }
+        return issueTokens(saved.getUserId());
+    }
+
+    // AUTH-03 로그아웃: 본인의 해당 Refresh Token 폐기 (없어도 성공 처리)
+    public void logout(Long userId, String refreshToken) {
+        refreshTokenRepository.deleteByUserIdAndTokenHash(userId, hash(refreshToken));
+    }
+
+    /**
+     * AUTH-06 회원 탈퇴 (즉시 삭제)
+     * 1) 소셜 연결 끊기 2) Refresh Token 폐기 3) 알림 정리 4) 회원 삭제 → 나머지는 DB CASCADE
+     * Google은 서버에 Google 액세스 토큰이 없어 연결 해제를 앱(revokeAccess)에서 합니다.
+     */
+    public void withdraw(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.AUTH_INVALID_TOKEN));
+
+        if (user.getProvider() == SocialProvider.KAKAO) {
+            kakaoClient.unlink(user.getProviderUserId());
+        }
+        refreshTokenRepository.deleteByUserId(userId);
+        userRepository.deleteNotificationsOf(userId);
+        userRepository.delete(user);
+    }
+
+    private TokenResponse issueTokens(Long userId) {
+        String refreshToken = newRefreshToken();
+        Instant expiresAt = clock.instant().plus(refreshTokenTtl);
+        refreshTokenRepository.save(new RefreshToken(userId, hash(refreshToken), expiresAt));
+        return new TokenResponse(jwtProvider.createAccessToken(userId), refreshToken);
+    }
+
+    private static String newRefreshToken() {
+        byte[] bytes = new byte[32];
+        RANDOM.nextBytes(bytes);
+        return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
+    }
+
+    private static String hash(String token) {
+        try {
+            byte[] digest = MessageDigest.getInstance("SHA-256").digest(token.getBytes(StandardCharsets.UTF_8));
+            return HexFormat.of().formatHex(digest);
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException(e);
+        }
+    }
+}

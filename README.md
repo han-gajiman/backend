@@ -12,8 +12,17 @@
 | --- | --- | --- | --- |
 | - | `GET /api/health` | 불필요 | ✅ |
 | SPOT-01 | `GET /api/v1/spots?category=` 명소 목록 (category 생략 시 전체) | 불필요 | ✅ |
+| AUTH-01 | `POST /api/v1/auth/kakao`, `POST /api/v1/auth/google` 소셜 로그인·자동 가입 | 불필요 | ✅ |
+| AUTH-03 | `POST /api/v1/auth/refresh` 토큰 재발급 | 불필요 | ✅ |
+| AUTH-03 | `POST /api/v1/auth/logout` 로그아웃 | 필요 | ✅ |
+| AUTH-02 | `POST /api/v1/users/me/onboarding` 온보딩 | 필요 | ✅ |
+| AUTH-04 | `GET /api/v1/users/me`, `PUT /api/v1/users/me/push-token` | 필요 | ✅ |
+| AUTH-05 | `PUT /api/v1/users/me/agreements/location` | 필요 | ✅ |
+| AUTH-06 | `DELETE /api/v1/users/me` 회원 탈퇴 | 필요 | ✅ |
+| - | `GET /api/v1/dev/token?userId=` 개발용 토큰 (`local` 프로필 전용) | 불필요 | ✅ |
 
-나머지 기능은 기능명세서 P0 → P1 → P2 순서로 추가합니다.
+- 온보딩 전에는 위 회원 API·로그인·로그아웃·탈퇴만 쓸 수 있고, 나머지는 `403 ONBOARDING_REQUIRED`입니다.
+- 나머지 기능은 기능명세서 P0 → P1 → P2 순서로 추가합니다.
 
 ## 기술 스택
 
@@ -47,10 +56,35 @@ export TEST_DB_URL=jdbc:postgresql://localhost:5432/hangajiman_test   # 테스�
 ## 실행
 
 ```bash
-./gradlew bootRun                                  # http://localhost:8080
-./gradlew bootRun --args='--server.port=8081'      # 8080을 다른 앱이 쓰고 있을 때
-./gradlew test                                     # 테스트 (hangajiman_test DB 사용)
+./gradlew bootRun --args='--spring.profiles.active=local'   # http://localhost:8080 (개발용 토큰 API 포함)
+./gradlew bootRun --args='--spring.profiles.active=local --server.port=8081'   # 8080을 다른 앱이 쓰고 있을 때
+./gradlew test                                               # 테스트 (hangajiman_test DB 사용)
 ```
+
+### 로그인이 필요한 API를 로컬에서 호출하기
+
+카카오·Google 없이 개발용 토큰으로 호출합니다. (`local` 프로필에서만 동작)
+
+```bash
+# 1) 회원이 없으면 하나 만들기
+psql -d hangajiman -c "insert into users(provider, provider_user_id) values ('KAKAO', 'dev-1') returning id;"
+# 2) 그 id로 토큰 받기
+curl "localhost:8080/api/v1/dev/token?userId=1"
+# 3) 토큰으로 호출 (온보딩부터)
+curl -H "Authorization: Bearer {토큰}" -H "Content-Type: application/json" \
+  -d '{"nickname":"소원지기","agreements":{"terms":true,"privacy":true,"location":false},"agreementVersion":"1.0"}' \
+  localhost:8080/api/v1/users/me/onboarding
+```
+
+### 환경변수
+
+| 이름 | 용도 | 없으면 |
+| --- | --- | --- |
+| `JWT_SECRET` | JWT 서명 키 (32바이트 이상, 배포 시 필수) | 로컬 개발용 기본값 |
+| `GOOGLE_CLIENT_IDS` | 앱의 Google OAuth 클라이언트 ID (Android·iOS·웹은 쉼표로 구분) | Google 로그인 실패 |
+| `KAKAO_ADMIN_KEY` | 탈퇴 시 카카오 연결 끊기 (카카오 개발자 콘솔 어드민 키) | 연결 끊기만 건너뛰고 탈퇴는 진행 |
+
+Google은 서버에 Google 액세스 토큰이 없어서, 탈퇴 시 Google 연결 해제는 앱에서 합니다(`revokeAccess`).
 
 확인: `curl localhost:8080/api/health`
 
@@ -73,9 +107,11 @@ export TEST_DB_URL=jdbc:postgresql://localhost:5432/hangajiman_test   # 테스�
 
 ```text
 src/main/java/com/hangajiman/
-├── global/   공통 (응답 형식, 예외, BaseEntity, Clock·JPA 설정)
+├── global/   공통 (응답 형식, 예외, BaseEntity, Clock·JPA 설정, security: JWT·온보딩 확인)
+├── auth/     소셜 로그인(카카오·Google), Refresh Token, 탈퇴
+├── user/     회원, 온보딩, 동의 이력, 내 정보
 ├── spot/     명소
-└── (auth, user, wish, stone, friend, notification, ai 순서대로 추가 예정)
+└── (wish, stone, friend, notification, ai 순서대로 추가 예정)
 src/main/resources/
 ├── application.properties
 └── db/migration/

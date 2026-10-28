@@ -73,6 +73,10 @@
 400 CHEER_TOO_LONG             응원 글자 수 초과
 429 NUDGE_LIMIT                오늘 이미 콕 찌름
 429 AI_RATE_LIMIT              AI 추천 하루 호출 횟수 초과
+// 공통 (10/28 추가)
+400 INVALID_INPUT              요청 값 검증 실패, JSON·Content-Type 오류, 파라미터 누락·타입 오류
+404 NOT_FOUND                  없는 주소
+500 INTERNAL_ERROR             서버 오류
 ```
 
 ### 🔐 Auth · 회원
@@ -113,9 +117,12 @@
 { "agreed": true }   → 204
 
 // DELETE /users/me   즉시 삭제
-// 1) 카카오 연결 끊기 / Google 토큰 해지  2) Refresh Token 폐기
-// 3) 본인 데이터·친구 관계·작성한 응원·관련 알림 삭제
+// 1) 카카오 연결 끊기 (서버, KAKAO_ADMIN_KEY) / Google은 서버에 Google 토큰이 없어 앱에서 revokeAccess
+// 2) Refresh Token 폐기  3) 본인 데이터·친구 관계·작성한 응원·관련 알림 삭제
 → 204
+
+// 온보딩 전에는 로그인·재발급·로그아웃, GET·DELETE /users/me, 온보딩, 푸시 토큰만 호출 가능
+// 그 외 로그인 필요 API는 403 ONBOARDING_REQUIRED
 ```
 
 ### 🌠 Wish (돌탑)
