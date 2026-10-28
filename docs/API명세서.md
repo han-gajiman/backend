@@ -75,6 +75,7 @@
 400 CHEER_TOO_LONG             응원 글자 수 초과
 400 NUDGE_NOT_ALLOWED          친구 공개 진행 중 돌탑이 없거나 오늘 이미 돌을 쌓은 친구에게 콕 찌르기
 429 NUDGE_LIMIT                오늘 이미 콕 찌름
+404 NOTIFICATION_NOT_FOUND     없거나 남의 알림 읽음 처리
 429 AI_RATE_LIMIT              AI 추천 하루 호출 횟수 초과
 // 공통 (10/28 추가)
 400 INVALID_INPUT              요청 값 검증 실패, JSON·Content-Type 오류, 파라미터 누락·타입 오류
@@ -234,7 +235,10 @@
                  "message": "30일 돌탑이 완성됐어요", "isRead": false, "createdAt": "..." } ],
   "page": 0, "size": 20, "hasNext": false }
 
-// PATCH /notifications/{id}/read   → 204
+// PATCH /notifications/{id}/read   → 204   (없거나 남의 알림 404 NOTIFICATION_NOT_FOUND, 이미 읽었어도 204)
+
+// 푸시 (10/28): 알림이 저장·커밋된 뒤 받는 사람의 Expo 푸시 토큰(PUT /users/me/push-token)으로 발송
+// { title: "한 가지만", body: 알림 message, data: { type, targetId } }. 토큰이 없으면 알림함에만 저장
 
 // POST /demo/time-travel   서버 시계 N일 이동 후 완성 스케줄러 즉시 실행 (시연 프로필 전용)
 { "days": 30 }   → { "serverNow": "2026-11-21T09:00:00+09:00" }

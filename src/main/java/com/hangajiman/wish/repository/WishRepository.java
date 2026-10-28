@@ -1,6 +1,5 @@
 package com.hangajiman.wish.repository;
 
-import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
@@ -35,16 +34,8 @@ public interface WishRepository extends JpaRepository<Wish, Long> {
     @Query(value = "SELECT EXISTS (SELECT 1 FROM spot_visits WHERE wish_id = :wishId)", nativeQuery = true)
     boolean existsSpotVisit(@Param("wishId") Long wishId);
 
-    // TOWER-01: 기간이 끝난 진행 중 돌탑의 주인에게 완성 알림 (상태를 바꾸기 전에 호출)
-    @Modifying
-    @Query(value = """
-            INSERT INTO notifications (user_id, type, target_id, message, created_at, updated_at)
-            SELECT user_id, 'TOWER_COMPLETED', id, :message, :now, :now
-            FROM wishes
-            WHERE status = 'ACTIVE' AND end_date < :today
-            """, nativeQuery = true)
-    int insertCompletedNotifications(@Param("today") LocalDate today, @Param("now") Instant now,
-                                     @Param("message") String message);
+    // TOWER-01: 기간이 끝난 진행 중 돌탑 (완성 알림 대상)
+    List<Wish> findByStatusAndEndDateBefore(WishStatus status, LocalDate date);
 
     // TOWER-01: 기간이 끝난 진행 중 돌탑 → COMPLETED (회고 대기)
     @Modifying(clearAutomatically = true, flushAutomatically = true)

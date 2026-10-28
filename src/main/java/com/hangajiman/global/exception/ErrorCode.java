@@ -36,6 +36,7 @@ public enum ErrorCode {
     CHEER_TOO_LONG(HttpStatus.BAD_REQUEST, "응원은 100자까지 쓸 수 있어요."),
     NUDGE_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "지금은 콕 찌를 수 없는 친구예요."),
     NUDGE_LIMIT(HttpStatus.TOO_MANY_REQUESTS, "오늘은 이미 콕 찔렀어요."),
+    NOTIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "알림을 찾을 수 없어요."),
     AI_RATE_LIMIT(HttpStatus.TOO_MANY_REQUESTS, "오늘 AI 추천 횟수를 모두 사용했어요.");
 
     private final HttpStatus status;

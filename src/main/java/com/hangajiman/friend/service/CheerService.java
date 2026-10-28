@@ -15,12 +15,13 @@ import com.hangajiman.friend.domain.Cheer;
 import com.hangajiman.friend.dto.CheerCreateResponse;
 import com.hangajiman.friend.dto.CheerResponse;
 import com.hangajiman.friend.repository.CheerRepository;
-import com.hangajiman.friend.repository.FriendNotificationRepository;
 import com.hangajiman.friend.repository.FriendshipRepository;
 import com.hangajiman.global.config.ClockConfig;
 import com.hangajiman.global.exception.BusinessException;
 import com.hangajiman.global.exception.ErrorCode;
 import com.hangajiman.global.response.PageResponse;
+import com.hangajiman.notification.domain.NotificationType;
+import com.hangajiman.notification.service.NotificationService;
 import com.hangajiman.user.domain.User;
 import com.hangajiman.user.repository.UserRepository;
 import com.hangajiman.wish.domain.Visibility;
@@ -30,7 +31,7 @@ import com.hangajiman.wish.repository.WishRepository;
 
 /**
  * FRIEND-03 응원. 익명 소원지기(FRIEND-05)는 보류라 지금은 친구만 응원할 수 있습니다.
- * 푸시는 알림함(notifications)에 CHEER 행을 저장하는 것까지. 실제 Expo 발송은 NOTI-01에서 붙입니다.
+ * 응원하면 돌탑 주인에게 CHEER 알림 (알림함 저장 + Expo 푸시, NOTI-01).
  */
 @Service
 @Transactional(readOnly = true)
@@ -40,18 +41,18 @@ public class CheerService {
     private final FriendshipRepository friendshipRepository;
     private final WishRepository wishRepository;
     private final UserRepository userRepository;
-    private final FriendNotificationRepository notificationRepository;
+    private final NotificationService notificationService;
 
     public CheerService(CheerRepository cheerRepository,
                         FriendshipRepository friendshipRepository,
                         WishRepository wishRepository,
                         UserRepository userRepository,
-                        FriendNotificationRepository notificationRepository) {
+                        NotificationService notificationService) {
         this.cheerRepository = cheerRepository;
         this.friendshipRepository = friendshipRepository;
         this.wishRepository = wishRepository;
         this.userRepository = userRepository;
-        this.notificationRepository = notificationRepository;
+        this.notificationService = notificationService;
     }
 
     /**
@@ -75,7 +76,7 @@ public class CheerService {
         Cheer cheer = cheerRepository.save(Cheer.byFriend(wishId, writerId, message));
         User writer = userRepository.findById(writerId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.AUTH_INVALID_TOKEN));
-        notificationRepository.saveCheer(wish.getUserId(), writerId, cheer.getId(),
+        notificationService.notify(wish.getUserId(), writerId, NotificationType.CHEER, cheer.getId(),
                 writer.getNickname() + "님이 응원을 보냈어요.");
         return new CheerCreateResponse(cheer.getId());
     }

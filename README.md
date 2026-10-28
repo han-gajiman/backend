@@ -29,8 +29,9 @@
 | DEMO-01 | `POST /api/v1/demo/time-travel` 시연용 시간 이동 (`local`·`demo` 프로필 전용) | 필요 | ✅ |
 | FRIEND-01 | `POST /api/v1/friends/invites` 초대 링크 생성, `POST /api/v1/friends/invites/{inviteCode}/accept` 초대 수락 | 필요 | ✅ |
 | FRIEND-02 | `GET /api/v1/friends?page=&size=` 친구 목록 + 돌탑 요약 | 필요 | ✅ |
-| FRIEND-03 | `POST`·`GET /api/v1/wishes/{wishId}/cheers` 응원 작성·목록 | 필요 | ✅ (알림함 저장까지, 푸시 발송은 NOTI-01) |
-| FRIEND-04 | `POST /api/v1/friends/{friendId}/nudge` 콕 찌르기 (하루 1회) | 필요 | ✅ (알림함 저장까지, 푸시 발송은 NOTI-01) |
+| FRIEND-03 | `POST`·`GET /api/v1/wishes/{wishId}/cheers` 응원 작성·목록 | 필요 | ✅ |
+| FRIEND-04 | `POST /api/v1/friends/{friendId}/nudge` 콕 찌르기 (하루 1회) | 필요 | ✅ |
+| NOTI-01 | `GET /api/v1/notifications?page=&size=` 알림함, `PATCH /api/v1/notifications/{id}/read` 읽음 + Expo 푸시 발송 (완성·응원·콕 찌르기) | 필요 | ✅ |
 | - | `GET /api/v1/dev/token?userId=` 개발용 토큰 (`local` 프로필 전용) | 불필요 | ✅ |
 | - | `POST /api/v1/dev/login { devKey }` 개발용 로그인·자동 가입, 실제와 같은 Access/Refresh Token (`local` 전용) | 불필요 | ✅ |
 
@@ -113,6 +114,7 @@ curl -H "Authorization: Bearer {토큰}" -H "Content-Type: application/json" \
 | --- | --- | --- |
 | `JWT_SECRET` | JWT 서명 키 (32바이트 이상, 배포 시 필수) | 로컬 개발용 기본값 |
 | `GOOGLE_CLIENT_IDS` | 앱의 Google OAuth 클라이언트 ID (Android·iOS·웹은 쉼표로 구분) | Google 로그인 실패 |
+| `EXPO_ACCESS_TOKEN` | Expo 푸시의 강화된 보안을 켰을 때만 | 인증 없이 발송 (기본) |
 | `KAKAO_ADMIN_KEY` | 탈퇴 시 카카오 연결 끊기 (카카오 개발자 콘솔 어드민 키) | 연결 끊기만 건너뛰고 탈퇴는 진행 |
 
 Google은 서버에 Google 액세스 토큰이 없어서, 탈퇴 시 Google 연결 해제는 앱에서 합니다(`revokeAccess`).
@@ -142,9 +144,10 @@ src/main/java/com/hangajiman/
 ├── auth/     소셜 로그인(카카오·Google), Refresh Token, 탈퇴
 ├── user/     회원, 온보딩, 동의 이력, 내 정보
 ├── spot/     명소
+├── notification/  알림함, Expo 푸시 발송 (알림은 NotificationService.notify()로만 만듭니다)
 ├── wish/     소원(돌탑)
 ├── stone/    돌 (오늘의 돌, 돌 목록)
-└── (friend, notification, ai 순서대로 추가 예정)
+└── (ai 추가 예정)
 src/main/resources/
 ├── application.properties
 └── db/migration/

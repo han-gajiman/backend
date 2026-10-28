@@ -2,6 +2,7 @@ package com.hangajiman.wish.service;
 
 import java.time.Clock;
 import java.time.LocalDate;
+import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -9,12 +10,15 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.hangajiman.notification.domain.NotificationType;
+import com.hangajiman.notification.service.NotificationService;
+import com.hangajiman.wish.domain.Wish;
+import com.hangajiman.wish.domain.WishStatus;
 import com.hangajiman.wish.repository.WishRepository;
 
 /**
- * TOWER-01 30일 완성 처리: 종료일이 지난 ACTIVE 돌탑을 COMPLETED(회고 대기)로 바꾸고 완성 알림을 남깁니다.
+ * TOWER-01 30일 완성 처리: 종료일이 지난 ACTIVE 돌탑을 COMPLETED(회고 대기)로 바꾸고 주인에게 완성 알림(+푸시).
  * 매시간 실행해서 서버가 자정에 꺼져 있었어도 다음 정각에 처리됩니다. 시연용 시간 이동 직후에도 바로 실행합니다.
- * TODO(NOTI-01): Expo 푸시 발송
  */
 @Service
 public class TowerCompletionService {
@@ -24,10 +28,12 @@ public class TowerCompletionService {
     private static final Logger log = LoggerFactory.getLogger(TowerCompletionService.class);
 
     private final WishRepository wishRepository;
+    private final NotificationService notificationService;
     private final Clock clock;
 
-    public TowerCompletionService(WishRepository wishRepository, Clock clock) {
+    public TowerCompletionService(WishRepository wishRepository, NotificationService notificationService, Clock clock) {
         this.wishRepository = wishRepository;
+        this.notificationService = notificationService;
         this.clock = clock;
     }
 
@@ -40,7 +46,11 @@ public class TowerCompletionService {
     @Transactional
     public int completeExpired() {
         LocalDate today = LocalDate.now(clock);
-        wishRepository.insertCompletedNotifications(today, clock.instant(), COMPLETED_MESSAGE);
+        List<Wish> expired = wishRepository.findByStatusAndEndDateBefore(WishStatus.ACTIVE, today);
+        for (Wish wish : expired) {
+            notificationService.notify(wish.getUserId(), null, NotificationType.TOWER_COMPLETED, wish.getId(),
+                    COMPLETED_MESSAGE);
+        }
         int completed = wishRepository.completeExpired(today);
         if (completed > 0) {
             log.info("30일 돌탑 완성 처리: {}개 (기준일 {})", completed, today);

@@ -25,12 +25,13 @@ import com.hangajiman.friend.dto.FriendResponse;
 import com.hangajiman.friend.dto.InviteAcceptResponse;
 import com.hangajiman.friend.dto.InviteResponse;
 import com.hangajiman.friend.repository.FriendInviteRepository;
-import com.hangajiman.friend.repository.FriendNotificationRepository;
 import com.hangajiman.friend.repository.FriendshipRepository;
 import com.hangajiman.global.config.ClockConfig;
 import com.hangajiman.global.exception.BusinessException;
 import com.hangajiman.global.exception.ErrorCode;
 import com.hangajiman.global.response.PageResponse;
+import com.hangajiman.notification.domain.NotificationType;
+import com.hangajiman.notification.service.NotificationService;
 import com.hangajiman.user.domain.User;
 import com.hangajiman.user.repository.UserRepository;
 import com.hangajiman.wish.domain.Visibility;
@@ -52,20 +53,20 @@ public class FriendService {
     private final FriendInviteRepository inviteRepository;
     private final FriendshipRepository friendshipRepository;
     private final UserRepository userRepository;
-    private final FriendNotificationRepository notificationRepository;
+    private final NotificationService notificationService;
     private final Clock clock;
     private final String inviteBaseUrl;
 
     public FriendService(FriendInviteRepository inviteRepository,
                          FriendshipRepository friendshipRepository,
                          UserRepository userRepository,
-                         FriendNotificationRepository notificationRepository,
+                         NotificationService notificationService,
                          Clock clock,
                          @Value("${friend.invite-base-url}") String inviteBaseUrl) {
         this.inviteRepository = inviteRepository;
         this.friendshipRepository = friendshipRepository;
         this.userRepository = userRepository;
-        this.notificationRepository = notificationRepository;
+        this.notificationService = notificationService;
         this.clock = clock;
         this.inviteBaseUrl = inviteBaseUrl.replaceAll("/+$", "");
     }
@@ -154,7 +155,7 @@ public class FriendService {
      * 친구 아님(본인 포함) → 404 FRIEND_NOT_FOUND
      * 친구 공개 진행 중 돌탑이 없거나 오늘 이미 쌓음 → 400 NUDGE_NOT_ALLOWED
      * 오늘 이미 찌름 → 429 NUDGE_LIMIT
-     * 알림함(notifications)에 NUDGE 행 저장까지. 실제 Expo 발송은 NOTI-01에서 붙입니다.
+     * 받는 사람에게 NUDGE 알림 (알림함 저장 + Expo 푸시, NOTI-01).
      */
     @Transactional
     public void nudge(Long userId, Long friendId) {
@@ -172,13 +173,13 @@ public class FriendService {
         }
 
         Instant startOfToday = today.atStartOfDay(ClockConfig.KST).toInstant();
-        if (notificationRepository.existsNudgeSince(userId, friendId, startOfToday)) {
+        if (notificationService.hasSentSince(NotificationType.NUDGE, userId, friendId, startOfToday)) {
             throw new BusinessException(ErrorCode.NUDGE_LIMIT);
         }
 
         User me = userRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.AUTH_INVALID_TOKEN));
-        notificationRepository.saveNudge(friendId, userId, wish.getId(),
+        notificationService.notify(friendId, userId, NotificationType.NUDGE, wish.getId(),
                 me.getNickname() + "님이 콕 찔렀어요! 오늘의 돌을 쌓아 보세요.");
     }
 
