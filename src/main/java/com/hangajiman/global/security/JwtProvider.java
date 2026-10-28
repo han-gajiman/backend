@@ -7,8 +7,11 @@ import java.util.Date;
 
 import javax.crypto.SecretKey;
 
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+
+import com.hangajiman.global.config.ClockConfig;
 
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
@@ -16,7 +19,8 @@ import io.jsonwebtoken.security.Keys;
 
 /**
  * Access Token(JWT) 발급·검증. sub = userId.
- * 발급 시각·만료 판단 모두 주입된 Clock 기준이라 시연용 시간 이동(DEMO-01)과 맞습니다.
+ * 발급 시각·만료 판단은 실제 시계(systemClock) 기준입니다.
+ * 시연용 시간 이동(DEMO-01)을 따라가면 이동하는 순간 모든 토큰이 만료되어 시연이 끊기기 때문입니다.
  */
 @Component
 public class JwtProvider {
@@ -27,7 +31,7 @@ public class JwtProvider {
 
     public JwtProvider(@Value("${jwt.secret}") String secret,
                        @Value("${jwt.access-exp-seconds}") long accessExpSeconds,
-                       Clock clock) {
+                       @Qualifier(ClockConfig.SYSTEM_CLOCK) Clock clock) {
         this.key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8)); // 32바이트 미만이면 기동 실패
         this.accessExpSeconds = accessExpSeconds;
         this.clock = clock;

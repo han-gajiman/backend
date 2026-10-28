@@ -11,6 +11,7 @@ import java.util.Base64;
 import java.util.HexFormat;
 import java.util.Optional;
 
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,6 +23,7 @@ import com.hangajiman.auth.repository.RefreshTokenRepository;
 import com.hangajiman.auth.social.GoogleClient;
 import com.hangajiman.auth.social.KakaoClient;
 import com.hangajiman.auth.social.SocialProfile;
+import com.hangajiman.global.config.ClockConfig;
 import com.hangajiman.global.exception.BusinessException;
 import com.hangajiman.global.exception.ErrorCode;
 import com.hangajiman.global.security.JwtProvider;
@@ -44,7 +46,8 @@ public class AuthService {
     private final Duration refreshTokenTtl;
 
     public AuthService(KakaoClient kakaoClient, GoogleClient googleClient, UserRepository userRepository,
-                       RefreshTokenRepository refreshTokenRepository, JwtProvider jwtProvider, Clock clock,
+                       RefreshTokenRepository refreshTokenRepository, JwtProvider jwtProvider,
+                       @Qualifier(ClockConfig.SYSTEM_CLOCK) Clock clock, // 토큰 만료는 실제 시간 기준
                        @Value("${jwt.refresh-exp-days}") long refreshExpDays) {
         this.kakaoClient = kakaoClient;
         this.googleClient = googleClient;
