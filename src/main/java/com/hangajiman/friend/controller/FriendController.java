@@ -35,6 +35,13 @@ public class FriendController {
         return ApiResponse.ok(friendService.getFriends(userId, page, size));
     }
 
+    // FRIEND-04 POST /friends/{friendId}/nudge → 204 (같은 친구 하루 1회)
+    @PostMapping("/{friendId}/nudge")
+    public ResponseEntity<Void> nudge(@AuthenticationPrincipal Long userId, @PathVariable Long friendId) {
+        friendService.nudge(userId, friendId);
+        return ResponseEntity.noContent().build();
+    }
+
     // FRIEND-01 POST /friends/invites → 201
     @PostMapping("/invites")
     public ResponseEntity<ApiResponse<InviteResponse>> createInvite(@AuthenticationPrincipal Long userId) {

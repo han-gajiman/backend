@@ -31,8 +31,10 @@ public enum ErrorCode {
     FRIEND_SELF_INVITE(HttpStatus.BAD_REQUEST, "본인의 초대는 수락할 수 없어요."),
     FRIEND_ALREADY(HttpStatus.CONFLICT, "이미 친구예요."),
     FRIEND_INVITE_NOT_FOUND(HttpStatus.NOT_FOUND, "잘못되었거나 만료된 초대예요."),
+    FRIEND_NOT_FOUND(HttpStatus.NOT_FOUND, "친구를 찾을 수 없어요."),
     CHEER_NOT_ALLOWED(HttpStatus.FORBIDDEN, "응원할 수 없는 돌탑이에요."),
     CHEER_TOO_LONG(HttpStatus.BAD_REQUEST, "응원은 100자까지 쓸 수 있어요."),
+    NUDGE_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "지금은 콕 찌를 수 없는 친구예요."),
     NUDGE_LIMIT(HttpStatus.TOO_MANY_REQUESTS, "오늘은 이미 콕 찔렀어요."),
     AI_RATE_LIMIT(HttpStatus.TOO_MANY_REQUESTS, "오늘 AI 추천 횟수를 모두 사용했어요.");
 

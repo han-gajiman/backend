@@ -25,6 +25,7 @@ import com.hangajiman.friend.dto.FriendResponse;
 import com.hangajiman.friend.dto.InviteAcceptResponse;
 import com.hangajiman.friend.dto.InviteResponse;
 import com.hangajiman.friend.repository.FriendInviteRepository;
+import com.hangajiman.friend.repository.FriendNotificationRepository;
 import com.hangajiman.friend.repository.FriendshipRepository;
 import com.hangajiman.global.config.ClockConfig;
 import com.hangajiman.global.exception.BusinessException;
@@ -51,17 +52,20 @@ public class FriendService {
     private final FriendInviteRepository inviteRepository;
     private final FriendshipRepository friendshipRepository;
     private final UserRepository userRepository;
+    private final FriendNotificationRepository notificationRepository;
     private final Clock clock;
     private final String inviteBaseUrl;
 
     public FriendService(FriendInviteRepository inviteRepository,
                          FriendshipRepository friendshipRepository,
                          UserRepository userRepository,
+                         FriendNotificationRepository notificationRepository,
                          Clock clock,
                          @Value("${friend.invite-base-url}") String inviteBaseUrl) {
         this.inviteRepository = inviteRepository;
         this.friendshipRepository = friendshipRepository;
         this.userRepository = userRepository;
+        this.notificationRepository = notificationRepository;
         this.clock = clock;
         this.inviteBaseUrl = inviteBaseUrl.replaceAll("/+$", "");
     }
@@ -143,6 +147,39 @@ public class FriendService {
                 })
                 .toList();
         return new PageResponse<>(content, friendships.getNumber(), friendships.getSize(), friendships.hasNext());
+    }
+
+    /**
+     * FRIEND-04 콕 찌르기: 오늘(KST) 아직 돌을 안 쌓은 친구에게 알림. 같은 친구에게는 하루 1회.
+     * 친구 아님(본인 포함) → 404 FRIEND_NOT_FOUND
+     * 친구 공개 진행 중 돌탑이 없거나 오늘 이미 쌓음 → 400 NUDGE_NOT_ALLOWED
+     * 오늘 이미 찌름 → 429 NUDGE_LIMIT
+     * 알림함(notifications)에 NUDGE 행 저장까지. 실제 Expo 발송은 NOTI-01에서 붙입니다.
+     */
+    @Transactional
+    public void nudge(Long userId, Long friendId) {
+        if (!friendshipRepository.existsByUserIdAndFriendId(userId, friendId)) {
+            throw new BusinessException(ErrorCode.FRIEND_NOT_FOUND);
+        }
+
+        LocalDate today = LocalDate.now(clock);
+        Wish wish = friendshipRepository.findWishesOf(List.of(friendId), WishStatus.ACTIVE).stream()
+                .filter(found -> found.getVisibility() == Visibility.FRIENDS)
+                .findFirst()
+                .orElseThrow(() -> new BusinessException(ErrorCode.NUDGE_NOT_ALLOWED));
+        if (!friendshipRepository.findWishIdsStonedOn(List.of(wish.getId()), today).isEmpty()) {
+            throw new BusinessException(ErrorCode.NUDGE_NOT_ALLOWED);
+        }
+
+        Instant startOfToday = today.atStartOfDay(ClockConfig.KST).toInstant();
+        if (notificationRepository.existsNudgeSince(userId, friendId, startOfToday)) {
+            throw new BusinessException(ErrorCode.NUDGE_LIMIT);
+        }
+
+        User me = userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.AUTH_INVALID_TOKEN));
+        notificationRepository.saveNudge(friendId, userId, wish.getId(),
+                me.getNickname() + "님이 콕 찔렀어요! 오늘의 돌을 쌓아 보세요.");
     }
 
     private String newInviteCode() {

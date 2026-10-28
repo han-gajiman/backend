@@ -70,8 +70,10 @@
 400 FRIEND_SELF_INVITE         본인 초대 수락
 409 FRIEND_ALREADY             이미 친구
 404 FRIEND_INVITE_NOT_FOUND    잘못되거나 만료된 초대 코드
+404 FRIEND_NOT_FOUND           친구가 아닌 회원(본인 포함)에게 콕 찌르기
 403 CHEER_NOT_ALLOWED          친구 아님 / 비공개 돌탑
 400 CHEER_TOO_LONG             응원 글자 수 초과
+400 NUDGE_NOT_ALLOWED          친구 공개 진행 중 돌탑이 없거나 오늘 이미 돌을 쌓은 친구에게 콕 찌르기
 429 NUDGE_LIMIT                오늘 이미 콕 찌름
 429 AI_RATE_LIMIT              AI 추천 하루 호출 횟수 초과
 // 공통 (10/28 추가)
@@ -219,7 +221,9 @@
                  "message": "오늘도 하나 쌓자!", "createdAt": "..." } ],
   "page": 0, "size": 20, "hasNext": false }
 
-// POST /friends/{friendId}/nudge   같은 친구 하루 1회 → 204
+// POST /friends/{friendId}/nudge   같은 친구 하루 1회(KST) → 204
+// 친구 공개 진행 중 돌탑이 있고 오늘 아직 안 쌓은 친구만. 받는 사람 알림함에 NUDGE 알림 저장
+// 친구 아님 404 FRIEND_NOT_FOUND, 대상 아님 400 NUDGE_NOT_ALLOWED, 오늘 이미 찌름 429 NUDGE_LIMIT
 ```
 
 ### 🔔 Notification & Demo

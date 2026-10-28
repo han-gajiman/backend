@@ -23,6 +23,10 @@
 | - | `GET /api/v1/wishes/current` 진행 중 돌탑 | 필요 | ✅ |
 | STONE-01 | `POST /api/v1/wishes/{wishId}/stones` 오늘의 돌 (하루 1개) | 필요 | ✅ |
 | STONE-01 | `GET /api/v1/wishes/{wishId}/stones?page=&size=` 돌 목록 (최신순, 본인·친구 공개) | 필요 | ✅ |
+| FRIEND-01 | `POST /api/v1/friends/invites` 초대 링크 생성, `POST /api/v1/friends/invites/{inviteCode}/accept` 초대 수락 | 필요 | ✅ |
+| FRIEND-02 | `GET /api/v1/friends?page=&size=` 친구 목록 + 돌탑 요약 | 필요 | ✅ |
+| FRIEND-03 | `POST`·`GET /api/v1/wishes/{wishId}/cheers` 응원 작성·목록 | 필요 | ✅ (알림함 저장까지, 푸시 발송은 NOTI-01) |
+| FRIEND-04 | `POST /api/v1/friends/{friendId}/nudge` 콕 찌르기 (하루 1회) | 필요 | ✅ (알림함 저장까지, 푸시 발송은 NOTI-01) |
 | - | `GET /api/v1/dev/token?userId=` 개발용 토큰 (`local` 프로필 전용) | 불필요 | ✅ |
 
 - 온보딩 전에는 위 회원 API·로그인·로그아웃·탈퇴만 쓸 수 있고, 나머지는 `403 ONBOARDING_REQUIRED`입니다.
