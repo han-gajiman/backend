@@ -17,6 +17,9 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
 
     Optional<Notification> findByIdAndUserId(Long id, Long userId);
 
+    // 같은 알림을 이미 보냈는지 (1년 회고: 회차마다 한 번)
+    boolean existsByUserIdAndTypeAndTargetId(Long userId, NotificationType type, Long targetId);
+
     // 콕 찌르기 하루 1회 확인: actor가 user에게 since 이후 보낸 같은 종류 알림 (인덱스 idx_noti_nudge)
     boolean existsByTypeAndActorIdAndUserIdAndCreatedAtGreaterThanEqual(NotificationType type, Long actorId,
                                                                          Long userId, Instant since);

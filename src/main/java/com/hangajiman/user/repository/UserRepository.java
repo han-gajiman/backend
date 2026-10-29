@@ -1,5 +1,7 @@
 package com.hangajiman.user.repository;
 
+import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -14,6 +16,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     // 소셜 로그인 시 기존 회원 찾기 (없으면 자동 가입)
     Optional<User> findByProviderAndProviderUserId(SocialProvider provider, String providerUserId);
+
+    // TOWER-04: 첫 돌탑 시작일이 date 이전인 회원 (1년 회고 알림 대상 후보)
+    List<User> findByJourneyStartedOnLessThanEqual(LocalDate date);
 
     // 진행 중(ACTIVE/COMPLETED) 돌탑이 있는지. Wish 엔티티가 생기면 WishRepository로 옮겨도 됩니다.
     @Query(value = "SELECT EXISTS (SELECT 1 FROM wishes WHERE user_id = :userId AND status IN ('ACTIVE', 'COMPLETED'))",

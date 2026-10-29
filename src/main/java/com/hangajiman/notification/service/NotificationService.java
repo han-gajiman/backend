@@ -43,6 +43,10 @@ public class NotificationService {
         return notification;
     }
 
+    public boolean hasNotified(Long userId, NotificationType type, Long targetId) {
+        return notificationRepository.existsByUserIdAndTypeAndTargetId(userId, type, targetId);
+    }
+
     // 콕 찌르기 하루 1회 확인용
     public boolean hasSentSince(NotificationType type, Long actorId, Long userId, Instant since) {
         return notificationRepository.existsByTypeAndActorIdAndUserIdAndCreatedAtGreaterThanEqual(
