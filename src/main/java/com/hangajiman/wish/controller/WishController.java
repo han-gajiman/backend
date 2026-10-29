@@ -6,6 +6,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -18,6 +19,7 @@ import com.hangajiman.wish.dto.WishDtos.CreateWishRequest;
 import com.hangajiman.wish.dto.WishDtos.CreateWishResponse;
 import com.hangajiman.wish.dto.WishDtos.CurrentWishResponse;
 import com.hangajiman.wish.dto.WishDtos.ReflectionRequest;
+import com.hangajiman.wish.dto.WishDtos.VisibilityRequest;
 import com.hangajiman.wish.dto.WishDtos.WishSummary;
 import com.hangajiman.wish.service.WishService;
 
@@ -44,6 +46,14 @@ public class WishController {
     @GetMapping("/current")
     public ApiResponse<CurrentWishResponse> getCurrent(@AuthenticationPrincipal Long userId) {
         return ApiResponse.ok(wishService.getCurrent(userId));
+    }
+
+    // WISH-04 PATCH /wishes/{wishId}/visibility → 204
+    @PatchMapping("/{wishId}/visibility")
+    public ResponseEntity<Void> changeVisibility(@AuthenticationPrincipal Long userId, @PathVariable Long wishId,
+                                                 @Valid @RequestBody VisibilityRequest request) {
+        wishService.changeVisibility(userId, wishId, request.visibility());
+        return ResponseEntity.noContent().build();
     }
 
     // TOWER-02 POST /wishes/{wishId}/reflection → 204 (COMPLETED → CLOSED)

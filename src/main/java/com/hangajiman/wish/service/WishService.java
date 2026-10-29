@@ -78,6 +78,15 @@ public class WishService {
         return new CreateWishResponse(wish.getId(), wish.getStartDate(), wish.getEndDate());
     }
 
+    // WISH-04 공개 범위 변경 (본인 돌탑만). 친구 목록·응원·콕 찌르기는 FRIENDS일 때만 됩니다.
+    @Transactional
+    public void changeVisibility(Long userId, Long wishId, Visibility visibility) {
+        wishRepository.findById(wishId)
+                .filter(w -> w.isOwnedBy(userId))
+                .orElseThrow(() -> new BusinessException(ErrorCode.WISH_NOT_OWNER))
+                .changeVisibility(visibility);
+    }
+
     /**
      * TOWER-02 완성 회고 → CLOSED. 30일이 지난 돌탑만 (아니면 403 TOWER_NOT_COMPLETED).
      * 회고 후에는 진행 중 돌탑이 없어져 새 소원을 시작할 수 있습니다.

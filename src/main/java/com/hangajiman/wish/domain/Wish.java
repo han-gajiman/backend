@@ -117,6 +117,11 @@ public class Wish extends BaseEntity {
     }
 
     // TOWER-02 완성 회고 → CLOSED. 상태 확인은 서비스에서 합니다.
+    // WISH-04 공개 범위는 등록 후에도 바꿀 수 있습니다. (소원·실천 목표와 달리)
+    public void changeVisibility(Visibility visibility) {
+        this.visibility = visibility;
+    }
+
     public void close(WishResult result, String reflection) {
         this.status = WishStatus.CLOSED;
         this.result = result;

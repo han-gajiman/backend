@@ -50,6 +50,10 @@ public final class WishDtos {
     }
 
     // POST /wishes/{wishId}/reflection. 한 줄 회고는 비워도 됩니다.
+    // PATCH /wishes/{wishId}/visibility
+    public record VisibilityRequest(@NotNull Visibility visibility) {
+    }
+
     public record ReflectionRequest(@NotNull WishResult result, @Size(max = 200) String reflection) {
     }
 
