@@ -99,6 +99,25 @@ class DemoControllerTest {
     }
 
     @Test
+    void inviteLinkSurvivesTimeTravel() throws Exception {
+        User inviter = onboardedUser();
+        User invitee = onboardedUser();
+        String inviterBearer = "Bearer " + jwtProvider.createAccessToken(inviter.getId());
+        String code = com.jayway.jsonpath.JsonPath.read(mockMvc.perform(post("/api/v1/friends/invites")
+                        .header(HttpHeaders.AUTHORIZATION, inviterBearer))
+                .andReturn().getResponse().getContentAsString(), "$.data.inviteCode");
+
+        mockMvc.perform(post("/api/v1/demo/time-travel").header(HttpHeaders.AUTHORIZATION, inviterBearer)
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"days\": 30}"))
+                .andExpect(status().isOk());
+
+        // 초대 링크 7일은 실제 시간 기준이라 시간 이동 후에도 수락 가능
+        mockMvc.perform(post("/api/v1/friends/invites/" + code + "/accept")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtProvider.createAccessToken(invitee.getId())))
+                .andExpect(status().isOk());
+    }
+
+    @Test
     void invalidDaysAreRejected() throws Exception {
         String bearer = "Bearer " + jwtProvider.createAccessToken(onboardedUser().getId());
 

@@ -104,6 +104,19 @@ class VisibilityTest {
     }
 
     @Test
+    void missingWishIs404() throws Exception {
+        User owner = onboardedUser("주인");
+
+        mockMvc.perform(as(owner, patch("/api/v1/wishes/999999999/visibility")).content("{\"visibility\": \"FRIENDS\"}"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error.code").value("WISH_NOT_FOUND"));
+        mockMvc.perform(as(owner, org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                        .post("/api/v1/wishes/999999999/reflection")).content("{\"result\": \"ACHIEVED\"}"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error.code").value("WISH_NOT_FOUND"));
+    }
+
+    @Test
     void invalidVisibilityIsRejected() throws Exception {
         User owner = onboardedUser("주인");
         Wish wish = wishRepository.saveAndFlush(Wish.create(owner.getId(), 2L, "소원", "실천",

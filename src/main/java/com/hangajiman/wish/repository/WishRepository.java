@@ -42,9 +42,4 @@ public interface WishRepository extends JpaRepository<Wish, Long> {
     @Query("UPDATE Wish w SET w.status = com.hangajiman.wish.domain.WishStatus.COMPLETED "
             + "WHERE w.status = com.hangajiman.wish.domain.WishStatus.ACTIVE AND w.endDate < :today")
     int completeExpired(@Param("today") LocalDate today);
-
-    // viewer가 owner의 친구인지. friendships는 FRIEND-01에서 채워집니다(수락 시 양방향 2행).
-    @Query(value = "SELECT EXISTS (SELECT 1 FROM friendships WHERE user_id = :viewerId AND friend_id = :ownerId)",
-            nativeQuery = true)
-    boolean areFriends(@Param("viewerId") Long viewerId, @Param("ownerId") Long ownerId);
 }

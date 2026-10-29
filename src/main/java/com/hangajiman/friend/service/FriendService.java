@@ -12,6 +12,7 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Slice;
@@ -55,6 +56,7 @@ public class FriendService {
     private final UserRepository userRepository;
     private final NotificationService notificationService;
     private final Clock clock;
+    private final Clock systemClock; // 초대 링크 만료는 실제 시간 기준 (시연용 시간 이동으로 만료되지 않게)
     private final String inviteBaseUrl;
 
     public FriendService(FriendInviteRepository inviteRepository,
@@ -62,19 +64,21 @@ public class FriendService {
                          UserRepository userRepository,
                          NotificationService notificationService,
                          Clock clock,
+                         @Qualifier(ClockConfig.SYSTEM_CLOCK) Clock systemClock,
                          @Value("${friend.invite-base-url}") String inviteBaseUrl) {
         this.inviteRepository = inviteRepository;
         this.friendshipRepository = friendshipRepository;
         this.userRepository = userRepository;
         this.notificationService = notificationService;
         this.clock = clock;
+        this.systemClock = systemClock;
         this.inviteBaseUrl = inviteBaseUrl.replaceAll("/+$", "");
     }
 
     // FRIEND-01 초대 링크 생성
     @Transactional
     public InviteResponse createInvite(Long userId) {
-        Instant expiresAt = clock.instant().plus(INVITE_TTL);
+        Instant expiresAt = systemClock.instant().plus(INVITE_TTL);
         FriendInvite invite = inviteRepository.save(new FriendInvite(userId, newInviteCode(), expiresAt));
         return new InviteResponse(
                 invite.getInviteCode(),
@@ -86,7 +90,7 @@ public class FriendService {
     @Transactional
     public InviteAcceptResponse acceptInvite(Long userId, String inviteCode) {
         FriendInvite invite = inviteRepository.findByInviteCode(inviteCode)
-                .filter(found -> !found.isExpired(clock.instant()))
+                .filter(found -> !found.isExpired(systemClock.instant()))
                 .orElseThrow(() -> new BusinessException(ErrorCode.FRIEND_INVITE_NOT_FOUND));
 
         Long inviterId = invite.getInviterId();

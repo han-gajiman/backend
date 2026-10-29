@@ -145,8 +145,8 @@ class StoneControllerTest {
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.error.code").value("WISH_NOT_OWNER"));
         mockMvc.perform(as(other, post("/api/v1/wishes/999999/stones")))
-                .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.error.code").value("WISH_NOT_OWNER"));
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error.code").value("WISH_NOT_FOUND"));
     }
 
     @Test

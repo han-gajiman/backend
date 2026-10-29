@@ -81,10 +81,7 @@ public class WishService {
     // WISH-04 공개 범위 변경 (본인 돌탑만). 친구 목록·응원·콕 찌르기는 FRIENDS일 때만 됩니다.
     @Transactional
     public void changeVisibility(Long userId, Long wishId, Visibility visibility) {
-        wishRepository.findById(wishId)
-                .filter(w -> w.isOwnedBy(userId))
-                .orElseThrow(() -> new BusinessException(ErrorCode.WISH_NOT_OWNER))
-                .changeVisibility(visibility);
+        findOwnedWish(userId, wishId).changeVisibility(visibility);
     }
 
     /**
@@ -93,9 +90,7 @@ public class WishService {
      */
     @Transactional
     public void reflect(Long userId, Long wishId, ReflectionRequest request) {
-        Wish wish = wishRepository.findById(wishId)
-                .filter(w -> w.isOwnedBy(userId))
-                .orElseThrow(() -> new BusinessException(ErrorCode.WISH_NOT_OWNER));
+        Wish wish = findOwnedWish(userId, wishId);
         if (wish.getStatus() == WishStatus.CLOSED) {
             throw new BusinessException(ErrorCode.TOWER_NOT_COMPLETED, "이미 회고를 남긴 돌탑이에요.");
         }
@@ -136,6 +131,16 @@ public class WishService {
                         stoneCounts.getOrDefault(w.getId(), 0L), spotNames.get(w.getSpotId()),
                         visited.contains(w.getId()), w.getResult()))
                 .toList();
+    }
+
+    // 없는 돌탑 404 WISH_NOT_FOUND, 남의 돌탑 403 WISH_NOT_OWNER
+    private Wish findOwnedWish(Long userId, Long wishId) {
+        Wish wish = wishRepository.findById(wishId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.WISH_NOT_FOUND));
+        if (!wish.isOwnedBy(userId)) {
+            throw new BusinessException(ErrorCode.WISH_NOT_OWNER);
+        }
+        return wish;
     }
 
     // GET /wishes/current. 진행 중(ACTIVE/COMPLETED) 돌탑이 없으면 null

@@ -59,7 +59,7 @@
 403 ONBOARDING_REQUIRED        온보딩 미완료
 400 REQUIRED_AGREEMENT_MISSING 필수 약관 미동의
 403 LOCATION_CONSENT_REQUIRED  위치정보 미동의 상태에서 방문 인증
-404 WISH_NOT_FOUND             없는 돌탑
+404 WISH_NOT_FOUND             없는 돌탑 (돌·회고·공개 범위·응원 API 공통, 남의 돌탑은 403 WISH_NOT_OWNER)
 409 WISH_ALREADY_ACTIVE        진행 중 돌탑이 있는데 새로 등록
 403 WISH_NOT_OWNER             본인 돌탑 아님
 400 WISH_NOT_ACTIVE            기간 끝난 돌탑에 돌 쌓기

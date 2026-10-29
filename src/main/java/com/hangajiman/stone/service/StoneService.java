@@ -8,6 +8,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.hangajiman.friend.repository.FriendshipRepository;
 import com.hangajiman.global.exception.BusinessException;
 import com.hangajiman.global.exception.ErrorCode;
 import com.hangajiman.global.response.PageResponse;
@@ -27,11 +28,14 @@ public class StoneService {
 
     private final StoneRepository stoneRepository;
     private final WishRepository wishRepository;
+    private final FriendshipRepository friendshipRepository;
     private final Clock clock;
 
-    public StoneService(StoneRepository stoneRepository, WishRepository wishRepository, Clock clock) {
+    public StoneService(StoneRepository stoneRepository, WishRepository wishRepository,
+                        FriendshipRepository friendshipRepository, Clock clock) {
         this.stoneRepository = stoneRepository;
         this.wishRepository = wishRepository;
+        this.friendshipRepository = friendshipRepository;
         this.clock = clock;
     }
 
@@ -76,12 +80,12 @@ public class StoneService {
 
     private boolean canView(Long userId, Wish wish) {
         return wish.isOwnedBy(userId)
-                || (wish.getVisibility() == Visibility.FRIENDS && wishRepository.areFriends(userId, wish.getUserId()));
+                || (wish.getVisibility() == Visibility.FRIENDS && friendshipRepository.existsByUserIdAndFriendId(userId, wish.getUserId()));
     }
 
-    // 없는 돌탑도 남의 돌탑과 같은 403으로 응답합니다(돌탑 id가 있는지 여부를 드러내지 않음).
+    // 없는 돌탑 404 WISH_NOT_FOUND, 남의 돌탑 403 WISH_NOT_OWNER (응원 API와 같은 기준)
     private Wish findWish(Long wishId) {
         return wishRepository.findById(wishId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.WISH_NOT_OWNER));
+                .orElseThrow(() -> new BusinessException(ErrorCode.WISH_NOT_FOUND));
     }
 }
