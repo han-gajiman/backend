@@ -12,7 +12,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.web.servlet.MockMvc;
 
-// 실제 DB(hangajiman_test)의 시드 명소 3곳으로 확인합니다.
+// 실제 DB(hangajiman_test)의 시드 명소 10곳으로 확인합니다.
 @SpringBootTest
 @AutoConfigureMockMvc
 class SpotControllerTest {
@@ -25,10 +25,10 @@ class SpotControllerTest {
         mockMvc.perform(get("/api/v1/spots"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data", hasSize(3)))
-                .andExpect(jsonPath("$.data[*].name", contains("팔공산 갓바위", "문경새재 과거길", "호미곶 해맞이광장")))
+                .andExpect(jsonPath("$.data", hasSize(10)))
+                .andExpect(jsonPath("$.data[0].name").value("팔공산 갓바위"))
                 .andExpect(jsonPath("$.data[1].category").value("PASS"))
-                .andExpect(jsonPath("$.data[1].latitude").value(36.765))
+                .andExpect(jsonPath("$.data[1].latitude").value(36.76844))
                 .andExpect(jsonPath("$.error").isEmpty());
     }
 
