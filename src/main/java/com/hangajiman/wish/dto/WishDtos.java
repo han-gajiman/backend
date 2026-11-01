@@ -45,7 +45,8 @@ public final class WishDtos {
     ) {
     }
 
-    // visited=false → backgroundImageUrl null → 프론트는 허허벌판 기본 배경
+    // 배경 이미지는 방문 여부와 관계없이 내려줍니다. 프론트가 미방문이면 흐리고 채도 낮게, 방문하면 원래 색으로 그립니다.
+    // backgroundImageUrl null → 프론트 임시 배경
     public record SpotSummary(Long id, String name, String category, boolean visited, String backgroundImageUrl) {
     }
 
