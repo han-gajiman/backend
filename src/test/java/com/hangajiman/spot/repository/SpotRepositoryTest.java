@@ -24,7 +24,8 @@ class SpotRepositoryTest {
         List<Spot> spots = spotRepository.findAll();
 
         assertThat(spots).extracting(Spot::getName)
-                .containsExactlyInAnyOrder("팔공산 갓바위", "문경새재 과거길", "호미곶 해맞이광장");
+                .contains("팔공산 갓바위", "문경새재 과거길", "호미곶 해맞이광장", "하회마을 삼신당 신목")
+                .hasSize(10);
         assertThat(spots).allSatisfy(spot -> {
             assertThat(spot.getRadiusM()).isEqualTo(500);
             assertThat(spot.getCreatedAt()).isNotNull();
