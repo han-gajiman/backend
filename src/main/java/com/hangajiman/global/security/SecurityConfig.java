@@ -6,6 +6,8 @@ import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
@@ -17,6 +19,8 @@ public class SecurityConfig {
             "/api/health",
             "/api/v1/auth/kakao",
             "/api/v1/auth/google",
+            "/api/v1/auth/signup/local", // 자체 회원가입 추가
+            "/api/v1/auth/login/local",  // 자체 로그인 추가
             "/api/v1/auth/refresh",
             "/api/v1/spots",
             "/api/v1/spots/**",
@@ -31,6 +35,12 @@ public class SecurityConfig {
     public SecurityConfig(JwtAuthFilter jwtAuthFilter, JwtAuthenticationEntryPoint authenticationEntryPoint) {
         this.jwtAuthFilter = jwtAuthFilter;
         this.authenticationEntryPoint = authenticationEntryPoint;
+    }
+
+    // 비밀번호 암호화를 위한 PasswordEncoder 빈 등록
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
     }
 
     @Bean

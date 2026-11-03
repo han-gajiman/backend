@@ -13,10 +13,13 @@ import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.hangajiman.auth.domain.RefreshToken;
+import com.hangajiman.auth.dto.AuthDtos.LocalLoginRequest;
+import com.hangajiman.auth.dto.AuthDtos.LocalSignUpRequest;
 import com.hangajiman.auth.dto.AuthDtos.LoginResponse;
 import com.hangajiman.auth.dto.AuthDtos.TokenResponse;
 import com.hangajiman.auth.repository.RefreshTokenRepository;
@@ -42,11 +45,13 @@ public class AuthService {
     private final UserRepository userRepository;
     private final RefreshTokenRepository refreshTokenRepository;
     private final JwtProvider jwtProvider;
+    private final PasswordEncoder passwordEncoder; // 비밀번호 암호화 및 검증용
     private final Clock clock;
     private final Duration refreshTokenTtl;
 
     public AuthService(KakaoClient kakaoClient, GoogleClient googleClient, UserRepository userRepository,
                        RefreshTokenRepository refreshTokenRepository, JwtProvider jwtProvider,
+                       PasswordEncoder passwordEncoder,
                        @Qualifier(ClockConfig.SYSTEM_CLOCK) Clock clock, // 토큰 만료는 실제 시간 기준
                        @Value("${jwt.refresh-exp-days}") long refreshExpDays) {
         this.kakaoClient = kakaoClient;
@@ -54,6 +59,7 @@ public class AuthService {
         this.userRepository = userRepository;
         this.refreshTokenRepository = refreshTokenRepository;
         this.jwtProvider = jwtProvider;
+        this.passwordEncoder = passwordEncoder;
         this.clock = clock;
         this.refreshTokenTtl = Duration.ofDays(refreshExpDays);
     }
@@ -84,6 +90,38 @@ public class AuthService {
         TokenResponse tokens = issueTokens(user.getId());
         return new LoginResponse(tokens.accessToken(), tokens.refreshToken(), existing.isEmpty(), user.isOnboarded());
     }
+
+    // --- 자체 회원가입 및 로그인 기능 추가 ---
+
+    // 자체 회원가입
+    public LoginResponse signupLocal(LocalSignUpRequest request) {
+        if (userRepository.existsByEmail(request.email())) {
+            throw new BusinessException(ErrorCode.DUPLICATE_EMAIL); // 이미 가입된 이메일 예외 처리
+        }
+
+        String encodedPassword = passwordEncoder.encode(request.password());
+        // User 엔티티에 추가했던 createLocal 팩토리 메서드 활용
+        User user = userRepository.save(User.createLocal(request.email(), encodedPassword, request.nickname()));
+
+        TokenResponse tokens = issueTokens(user.getId());
+        // 자체 가입은 즉시 생성된 신규 유저이며, 닉네임을 바로 받았으므로 온보딩 여부는 유저 상태에 따름 (보통 바로 온보딩 완료 처리 가능)
+        return new LoginResponse(tokens.accessToken(), tokens.refreshToken(), true, user.isOnboarded());
+    }
+
+    // 자체 로그인
+    public LoginResponse loginLocal(LocalLoginRequest request) {
+        User user = userRepository.findByEmail(request.email())
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND)); // 유저 없음 예외 처리
+
+        if (!passwordEncoder.matches(request.password(), user.getPassword())) {
+            throw new BusinessException(ErrorCode.INVALID_PASSWORD); // 비밀번호 불일치 예외 처리
+        }
+
+        TokenResponse tokens = issueTokens(user.getId());
+        return new LoginResponse(tokens.accessToken(), tokens.refreshToken(), false, user.isOnboarded());
+    }
+
+    // ------------------------------------
 
     // AUTH-03 재발급: 기존 Refresh Token은 폐기하고 새로 발급(교체). 만료된 토큰도 지운 뒤 401
     @Transactional(noRollbackFor = BusinessException.class)

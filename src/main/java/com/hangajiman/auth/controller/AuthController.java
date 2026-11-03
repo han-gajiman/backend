@@ -9,6 +9,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.hangajiman.auth.dto.AuthDtos.GoogleLoginRequest;
 import com.hangajiman.auth.dto.AuthDtos.KakaoLoginRequest;
+import com.hangajiman.auth.dto.AuthDtos.LocalLoginRequest;
+import com.hangajiman.auth.dto.AuthDtos.LocalSignUpRequest;
 import com.hangajiman.auth.dto.AuthDtos.LoginResponse;
 import com.hangajiman.auth.dto.AuthDtos.RefreshTokenRequest;
 import com.hangajiman.auth.dto.AuthDtos.TokenResponse;
@@ -39,6 +41,18 @@ public class AuthController {
         return ApiResponse.ok(authService.loginWithGoogle(request.idToken()));
     }
 
+    // POST /auth/signup/local 🔓 (자체 회원가입)
+    @PostMapping("/signup/local")
+    public ApiResponse<LoginResponse> signupLocal(@Valid @RequestBody LocalSignUpRequest request) {
+        return ApiResponse.ok(authService.signupLocal(request));
+    }
+
+    // POST /auth/login/local 🔓 (자체 로그인)
+    @PostMapping("/login/local")
+    public ApiResponse<LoginResponse> loginLocal(@Valid @RequestBody LocalLoginRequest request) {
+        return ApiResponse.ok(authService.loginLocal(request));
+    }
+
     // POST /auth/refresh 🔓
     @PostMapping("/refresh")
     public ApiResponse<TokenResponse> refresh(@Valid @RequestBody RefreshTokenRequest request) {
@@ -48,7 +62,7 @@ public class AuthController {
     // POST /auth/logout → 204
     @PostMapping("/logout")
     public ResponseEntity<Void> logout(@AuthenticationPrincipal Long userId,
-                                       @Valid @RequestBody RefreshTokenRequest request) {
+                                         @Valid @RequestBody RefreshTokenRequest request) {
         authService.logout(userId, request.refreshToken());
         return ResponseEntity.noContent().build();
     }
