@@ -12,6 +12,9 @@
 | AUTH-01 | POST | `/auth/google` 🔓 | Google 로그인/가입 |
 | AUTH-01 | POST | `/auth/signup/local` 🔓 | 자체 회원가입 (이메일·비밀번호, 11/3) |
 | AUTH-01 | POST | `/auth/login/local` 🔓 | 자체 로그인 (11/3) |
+| AUTH-01 | POST | `/auth/find-email` 🔓 | 아이디(이메일) 찾기: 닉네임 → 가린 이메일 (11/3) |
+| AUTH-01 | POST | `/auth/password/reset-code` 🔓 | 비밀번호 찾기 인증코드 메일 (11/3) |
+| AUTH-01 | POST | `/auth/password/reset` 🔓 | 인증코드 확인 후 새 비밀번호 (11/3) |
 | AUTH-03 | POST | `/auth/refresh` 🔓 | 토큰 재발급 |
 | AUTH-03 | POST | `/auth/logout` | 로그아웃 |
 | AUTH-02 | POST | `/users/me/onboarding` | 온보딩 (약관 동의 + 닉네임) |
@@ -60,6 +63,8 @@
 401 AUTH_SOCIAL_FAILED         카카오/Google 토큰 검증 실패
 401 AUTH_LOGIN_FAILED          자체 로그인 실패 (없는 이메일·틀린 비밀번호 구분 없이)
 409 AUTH_EMAIL_DUPLICATED      이미 가입된 이메일
+400 AUTH_RESET_CODE_INVALID    비밀번호 찾기 인증코드가 틀림/만료/5회 초과 (없는 이메일도 같은 에러)
+429 TOO_MANY_REQUESTS          계정 찾기 API를 짧은 시간에 너무 많이 호출 (IP·이메일 기준)
 403 ONBOARDING_REQUIRED        온보딩 미완료
 400 REQUIRED_AGREEMENT_MISSING 필수 약관 미동의
 403 LOCATION_CONSENT_REQUIRED  위치정보 미동의 상태에서 방문 인증
@@ -99,7 +104,16 @@
 // → 200 공통 응답 (isNewUser=true, onboarded=false → 온보딩에서 약관 동의)
 // POST /auth/login/local 🔓   자체 로그인
 { "email": "stone@example.com", "password": "password123" }
-// Response 200 (공통)
+// POST /auth/find-email 🔓   닉네임으로 가입한 이메일을 가려서 (최대 5개, IP당 10분에 10번)
+{ "nickname": "돌쌓기" }
+→ 200 { "emails": ["st***@ex***.com"] }   // 없으면 빈 배열
+// POST /auth/password/reset-code 🔓   이메일 회원이면 6자리 코드 메일 (10분 유효, 60초 안 재요청은 무시)
+{ "email": "stone@example.com" }
+→ 204   // 가입 여부와 관계없이 같은 응답
+// POST /auth/password/reset 🔓   코드가 맞으면 비밀번호 변경 + 모든 기기 로그아웃(Refresh Token 삭제)
+{ "email": "stone@example.com", "code": "123456", "newPassword": "newpassword1" }
+→ 204
+// Response 200 (공통: kakao, google, signup/local, login/local)
 { "accessToken": "eyJhbGciOi...", "refreshToken": "dGhpcyBpcyBh...",
   "isNewUser": true, "onboarded": false }
 // onboarded=false → 프론트는 온보딩 화면으로

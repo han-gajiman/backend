@@ -23,6 +23,18 @@ CREATE TABLE users (
   UNIQUE (provider, provider_user_id)
 );
 
+-- [추가 11/3] 비밀번호 찾기 인증코드 (V6). 코드 원문 대신 BCrypt 해시, 10분 만료, 5번 틀리면 무효, 회원당 1개
+CREATE TABLE password_reset_codes (
+  id          BIGSERIAL PRIMARY KEY,
+  user_id     BIGINT       NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  code_hash   VARCHAR(100) NOT NULL,
+  expires_at  TIMESTAMPTZ  NOT NULL,
+  attempts    INT          NOT NULL DEFAULT 0,
+  created_at  TIMESTAMPTZ  NOT NULL DEFAULT now(),
+  updated_at  TIMESTAMPTZ  NOT NULL DEFAULT now()
+);
+CREATE INDEX idx_password_reset_codes_user ON password_reset_codes(user_id);
+
 -- [변경] 약관·위치정보 동의 이력
 -- 기존 UNIQUE(user_id, type)을 제거해서 변경할 때마다 행을 추가 (최신 행 = 현재 상태)
 CREATE TABLE user_agreements (

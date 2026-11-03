@@ -86,6 +86,11 @@ public class User extends BaseEntity {
         return new User(email, encodedPassword, nickname);
     }
 
+    // 비밀번호 찾기로 새 비밀번호 설정 (BCrypt 해시)
+    public void changePassword(String encodedPassword) {
+        this.password = encodedPassword;
+    }
+
     public boolean isOnboarded() {
         return onboardedAt != null;
     }
