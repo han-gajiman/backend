@@ -5,5 +5,7 @@ package com.hangajiman.user.domain;
  */
 public enum SocialProvider {
     KAKAO,
-    GOOGLE
+    GOOGLE,
+    APPLE,
+    LOCAL
 }

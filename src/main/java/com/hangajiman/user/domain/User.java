@@ -35,6 +35,13 @@ public class User extends BaseEntity {
     @Column(name = "provider_user_id", nullable = false, length = 100)
     private String providerUserId;
 
+    // 자체 로그인용 이메일 및 비밀번호 (소셜 유저는 null)
+    @Column(length = 255, unique = true)
+    private String email;
+
+    @Column(length = 255)
+    private String password;
+
     @Column(length = 30)
     private String nickname;
 
@@ -60,9 +67,23 @@ public class User extends BaseEntity {
         this.profileImageUrl = profileImageUrl;
     }
 
+    // 자체 로그인용 생성자
+    private User(String email, String password, String nickname) {
+        this.provider = SocialProvider.LOCAL;
+        this.providerUserId = email; // 자체 로그인은 이메일을 providerUserId로 활용
+        this.email = email;
+        this.password = password;
+        this.nickname = nickname; // 자체 가입 시 닉네임을 바로 받을 수도 있음
+    }
+
     // 최초 소셜 로그인 시 자동 가입 (AUTH-01)
     public static User create(SocialProvider provider, String providerUserId, String profileImageUrl) {
         return new User(provider, providerUserId, profileImageUrl);
+    }
+
+    // 자체 회원가입 시 가입 메서드
+    public static User createLocal(String email, String encodedPassword, String nickname) {
+        return new User(email, encodedPassword, nickname);
     }
 
     public boolean isOnboarded() {
@@ -112,6 +133,14 @@ public class User extends BaseEntity {
 
     public String getProviderUserId() {
         return providerUserId;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public String getPassword() {
+        return password;
     }
 
     public String getNickname() {
