@@ -9,8 +9,10 @@
 -- 회원
 CREATE TABLE users (
   id                 BIGSERIAL PRIMARY KEY,
-  provider           VARCHAR(20)  NOT NULL CHECK (provider IN ('KAKAO','GOOGLE')),  -- [변경 10/27] Apple 제외, Google 추가 (V3 마이그레이션)
-  provider_user_id   VARCHAR(100) NOT NULL,                -- 소셜 회원 고유 ID
+  provider           VARCHAR(20)  NOT NULL CHECK (provider IN ('KAKAO','GOOGLE','LOCAL')),  -- [변경 10/27] Apple 제외, Google 추가 (V3) / [변경 11/3] 자체 로그인 LOCAL (V5)
+  provider_user_id   VARCHAR(100) NOT NULL,                -- 소셜 회원 고유 ID (LOCAL은 이메일)
+  email              VARCHAR(255),                         -- [추가 11/3] 자체 로그인 이메일(소문자), 소셜 회원은 NULL. 부분 유니크 uq_users_email (V5)
+  password           VARCHAR(255),                         -- [추가 11/3] BCrypt 해시, 소셜 회원은 NULL (V5)
   nickname           VARCHAR(30),                          -- 온보딩에서 설정
   profile_image_url  VARCHAR(500),
   push_token         VARCHAR(200),                         -- Expo push token (기기 1개 기준)

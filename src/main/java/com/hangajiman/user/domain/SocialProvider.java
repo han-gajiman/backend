@@ -6,6 +6,5 @@ package com.hangajiman.user.domain;
 public enum SocialProvider {
     KAKAO,
     GOOGLE,
-    APPLE,
-    LOCAL
+    LOCAL // 자체 로그인 (이메일·비밀번호, V5)
 }

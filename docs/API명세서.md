@@ -10,6 +10,8 @@
 | --- | --- | --- | --- |
 | AUTH-01 | POST | `/auth/kakao` 🔓 | 카카오 로그인/가입 |
 | AUTH-01 | POST | `/auth/google` 🔓 | Google 로그인/가입 |
+| AUTH-01 | POST | `/auth/signup/local` 🔓 | 자체 회원가입 (이메일·비밀번호, 11/3) |
+| AUTH-01 | POST | `/auth/login/local` 🔓 | 자체 로그인 (11/3) |
 | AUTH-03 | POST | `/auth/refresh` 🔓 | 토큰 재발급 |
 | AUTH-03 | POST | `/auth/logout` | 로그아웃 |
 | AUTH-02 | POST | `/users/me/onboarding` | 온보딩 (약관 동의 + 닉네임) |
@@ -56,6 +58,8 @@
 401 AUTH_INVALID_TOKEN         Access Token 없음/만료 → /auth/refresh 시도
 401 AUTH_INVALID_REFRESH_TOKEN Refresh Token 만료/폐기 → 재로그인
 401 AUTH_SOCIAL_FAILED         카카오/Google 토큰 검증 실패
+401 AUTH_LOGIN_FAILED          자체 로그인 실패 (없는 이메일·틀린 비밀번호 구분 없이)
+409 AUTH_EMAIL_DUPLICATED      이미 가입된 이메일
 403 ONBOARDING_REQUIRED        온보딩 미완료
 400 REQUIRED_AGREEMENT_MISSING 필수 약관 미동의
 403 LOCATION_CONSENT_REQUIRED  위치정보 미동의 상태에서 방문 인증
@@ -90,6 +94,11 @@
 { "accessToken": "카카오_액세스_토큰" }
 // POST /auth/google 🔓   앱의 Google 로그인에서 받은 ID 토큰을 서버가 검증 (10/27: Apple 대신 Google)
 { "idToken": "eyJhbGciOiJSUzI1NiIs..." }
+// POST /auth/signup/local 🔓   자체 회원가입. 이메일은 소문자로 저장, 비밀번호 8자 이상, 닉네임 30자 이하
+{ "email": "stone@example.com", "password": "password123", "nickname": "돌쌓기" }
+// → 200 공통 응답 (isNewUser=true, onboarded=false → 온보딩에서 약관 동의)
+// POST /auth/login/local 🔓   자체 로그인
+{ "email": "stone@example.com", "password": "password123" }
 // Response 200 (공통)
 { "accessToken": "eyJhbGciOi...", "refreshToken": "dGhpcyBpcyBh...",
   "isNewUser": true, "onboarded": false }
