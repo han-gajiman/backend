@@ -118,6 +118,8 @@ curl -H "Authorization: Bearer {토큰}" -H "Content-Type: application/json" \
 | `GOOGLE_CLIENT_IDS` | 앱의 Google OAuth 클라이언트 ID (Android·iOS·웹은 쉼표로 구분) | Google 로그인 실패 |
 | `EXPO_ACCESS_TOKEN` | Expo 푸시의 강화된 보안을 켰을 때만 | 인증 없이 발송 (기본) |
 | `KAKAO_ADMIN_KEY` | 탈퇴 시 카카오 연결 끊기 (카카오 개발자 콘솔 어드민 키) | 연결 끊기만 건너뛰고 탈퇴는 진행 |
+| `SPRING_MAIL_HOST`, `SPRING_MAIL_PORT`, `SPRING_MAIL_USERNAME`, `SPRING_MAIL_PASSWORD` | 비밀번호 찾기 인증코드 메일 (예: Gmail은 `smtp.gmail.com`, `587`, 보내는 주소, 앱 비밀번호) | 메일 대신 서버 로그에 코드를 찍음 (로컬 개발용, 배포 시 필수) |
+| `MAIL_FROM` | 보내는 사람 주소 | `SPRING_MAIL_USERNAME` |
 
 Google은 서버에 Google 액세스 토큰이 없어서, 탈퇴 시 Google 연결 해제는 앱에서 합니다(`revokeAccess`).
 

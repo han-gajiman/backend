@@ -1,7 +1,10 @@
 package com.hangajiman.auth.dto;
 
+import java.util.List;
+
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 /**
@@ -44,6 +47,25 @@ public final class AuthDtos {
 
         @NotBlank(message = "비밀번호는 필수입니다.")
         String password
+    ) {
+    }
+
+    // POST /auth/find-email — 아이디(이메일) 찾기
+    public record FindEmailRequest(@NotBlank @Size(max = 30) String nickname) {
+    }
+
+    public record FindEmailResponse(List<String> emails) {
+    }
+
+    // POST /auth/password/reset-code — 비밀번호 찾기 인증코드 보내기
+    public record ResetCodeRequest(@NotBlank @Email String email) {
+    }
+
+    // POST /auth/password/reset — 인증코드 확인 후 새 비밀번호
+    public record ResetPasswordRequest(
+        @NotBlank @Email String email,
+        @NotBlank @Pattern(regexp = "\\d{6}", message = "인증코드는 숫자 6자리예요.") String code,
+        @NotBlank @Size(min = 8, message = "비밀번호는 8자 이상이어야 합니다.") String newPassword
     ) {
     }
 

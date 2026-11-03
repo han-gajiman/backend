@@ -21,6 +21,8 @@ public class SecurityConfig {
             "/api/v1/auth/google",
             "/api/v1/auth/signup/local", // 자체 회원가입 추가
             "/api/v1/auth/login/local",  // 자체 로그인 추가
+            "/api/v1/auth/find-email",
+            "/api/v1/auth/password/**",
             "/api/v1/auth/refresh",
             "/api/v1/spots",
             "/api/v1/spots/**",
