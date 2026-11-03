@@ -204,4 +204,78 @@ class AuthControllerTest {
         verify(kakaoClient, never()).unlink(ArgumentMatchers.anyString());
         assertThat(userRepository.findByProviderAndProviderUserId(SocialProvider.GOOGLE, "google-withdraw")).isEmpty();
     }
+
+    // --- 자체 로그인 (이메일·비밀번호) ---
+
+    private String signupBody(String email, String password) {
+        return "{\"email\": \"" + email + "\", \"password\": \"" + password + "\", \"nickname\": \"돌쌓기\"}";
+    }
+
+    private String loginBody(String email, String password) {
+        return "{\"email\": \"" + email + "\", \"password\": \"" + password + "\"}";
+    }
+
+    @Test
+    void localSignupThenLogin() throws Exception {
+        JsonNode signup = dataOf(postJson("/api/v1/auth/signup/local", signupBody("Stone@Example.com", "password123"))
+                .andExpect(status().isOk()));
+        assertThat(signup.get("isNewUser").asBoolean()).isTrue();
+        assertThat(signup.get("onboarded").asBoolean()).isFalse(); // 약관 동의는 온보딩에서
+
+        // 이메일은 소문자로 저장되고, 비밀번호는 해시로만 저장
+        String saved = jdbcTemplate.queryForObject(
+                "SELECT password FROM users WHERE email = 'stone@example.com' AND provider = 'LOCAL'", String.class);
+        assertThat(saved).isNotEqualTo("password123").startsWith("$2");
+
+        JsonNode login = dataOf(postJson("/api/v1/auth/login/local", loginBody("stone@example.com", "password123"))
+                .andExpect(status().isOk()));
+        assertThat(login.get("isNewUser").asBoolean()).isFalse();
+        mockMvc.perform(get("/api/v1/users/me")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + login.get("accessToken").asText()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.nickname").value("돌쌓기"));
+    }
+
+    @Test
+    void duplicateEmailIsRejected() throws Exception {
+        postJson("/api/v1/auth/signup/local", signupBody("dup@example.com", "password123")).andExpect(status().isOk());
+
+        postJson("/api/v1/auth/signup/local", signupBody("DUP@example.com", "password456"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.error.code").value("AUTH_EMAIL_DUPLICATED"));
+    }
+
+    @Test
+    void wrongPasswordAndUnknownEmailGetSameError() throws Exception {
+        postJson("/api/v1/auth/signup/local", signupBody("me@example.com", "password123")).andExpect(status().isOk());
+
+        postJson("/api/v1/auth/login/local", loginBody("me@example.com", "wrong-password"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.error.code").value("AUTH_LOGIN_FAILED"));
+        postJson("/api/v1/auth/login/local", loginBody("nobody@example.com", "password123"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.error.code").value("AUTH_LOGIN_FAILED"));
+    }
+
+    @Test
+    void invalidSignupInput() throws Exception {
+        postJson("/api/v1/auth/signup/local", signupBody("not-an-email", "password123"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error.code").value("INVALID_INPUT"));
+        postJson("/api/v1/auth/signup/local", signupBody("short@example.com", "1234567"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error.code").value("INVALID_INPUT"));
+    }
+
+    @Test
+    void localWithdrawDoesNotCallKakao() throws Exception {
+        JsonNode signup = dataOf(postJson("/api/v1/auth/signup/local", signupBody("bye@example.com", "password123")));
+
+        mockMvc.perform(delete("/api/v1/users/me")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + signup.get("accessToken").asText()))
+                .andExpect(status().isNoContent());
+
+        verify(kakaoClient, never()).unlink(ArgumentMatchers.anyString());
+        assertThat(userRepository.findByEmail("bye@example.com")).isEmpty();
+    }
 }

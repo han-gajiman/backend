@@ -14,12 +14,9 @@ public enum ErrorCode {
     AUTH_INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "로그인이 필요해요."),
     AUTH_INVALID_REFRESH_TOKEN(HttpStatus.UNAUTHORIZED, "다시 로그인해 주세요."),
     AUTH_SOCIAL_FAILED(HttpStatus.UNAUTHORIZED, "소셜 로그인에 실패했어요."),
-    
-    // 자체 로그인 및 회원가입 관련 에러 코드 추가
-    DUPLICATE_EMAIL(HttpStatus.BAD_REQUEST, "이미 등록된 이메일이에요."),
-    INVALID_PASSWORD(HttpStatus.UNAUTHORIZED, "비밀번호가 일치하지 않아요."),
-    USER_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 사용자예요."),
-
+    // 자체 로그인: 없는 이메일과 틀린 비밀번호를 같은 에러로 답해 가입 여부가 드러나지 않게 합니다.
+    AUTH_LOGIN_FAILED(HttpStatus.UNAUTHORIZED, "이메일 또는 비밀번호가 맞지 않아요."),
+    AUTH_EMAIL_DUPLICATED(HttpStatus.CONFLICT, "이미 가입된 이메일이에요."),
     ONBOARDING_REQUIRED(HttpStatus.FORBIDDEN, "온보딩을 먼저 완료해 주세요."),
     REQUIRED_AGREEMENT_MISSING(HttpStatus.BAD_REQUEST, "필수 약관에 동의해 주세요."),
     LOCATION_CONSENT_REQUIRED(HttpStatus.FORBIDDEN, "위치정보 이용에 동의해 주세요."),

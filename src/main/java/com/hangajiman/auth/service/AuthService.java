@@ -9,6 +9,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Base64;
 import java.util.HexFormat;
+import java.util.Locale;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -91,37 +92,33 @@ public class AuthService {
         return new LoginResponse(tokens.accessToken(), tokens.refreshToken(), existing.isEmpty(), user.isOnboarded());
     }
 
-    // --- 자체 회원가입 및 로그인 기능 추가 ---
-
-    // 자체 회원가입
+    // 자체 회원가입: 이메일은 소문자로 저장하고, 비밀번호는 BCrypt 해시만 저장합니다.
+    // 닉네임을 가입할 때 받지만 약관 동의가 없으므로 onboarded=false → 프론트는 온보딩(약관 동의)으로 보냅니다.
     public LoginResponse signupLocal(LocalSignUpRequest request) {
-        if (userRepository.existsByEmail(request.email())) {
-            throw new BusinessException(ErrorCode.DUPLICATE_EMAIL); // 이미 가입된 이메일 예외 처리
+        String email = normalizeEmail(request.email());
+        if (userRepository.existsByEmail(email)) {
+            throw new BusinessException(ErrorCode.AUTH_EMAIL_DUPLICATED);
         }
 
-        String encodedPassword = passwordEncoder.encode(request.password());
-        // User 엔티티에 추가했던 createLocal 팩토리 메서드 활용
-        User user = userRepository.save(User.createLocal(request.email(), encodedPassword, request.nickname()));
-
+        User user = userRepository.save(User.createLocal(email, passwordEncoder.encode(request.password()), request.nickname()));
         TokenResponse tokens = issueTokens(user.getId());
-        // 자체 가입은 즉시 생성된 신규 유저이며, 닉네임을 바로 받았으므로 온보딩 여부는 유저 상태에 따름 (보통 바로 온보딩 완료 처리 가능)
         return new LoginResponse(tokens.accessToken(), tokens.refreshToken(), true, user.isOnboarded());
     }
 
-    // 자체 로그인
+    // 자체 로그인: 없는 이메일·틀린 비밀번호 모두 AUTH_LOGIN_FAILED
     public LoginResponse loginLocal(LocalLoginRequest request) {
-        User user = userRepository.findByEmail(request.email())
-                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND)); // 유저 없음 예외 처리
-
-        if (!passwordEncoder.matches(request.password(), user.getPassword())) {
-            throw new BusinessException(ErrorCode.INVALID_PASSWORD); // 비밀번호 불일치 예외 처리
-        }
+        User user = userRepository.findByEmail(normalizeEmail(request.email()))
+                .filter(u -> passwordEncoder.matches(request.password(), u.getPassword()))
+                .orElseThrow(() -> new BusinessException(ErrorCode.AUTH_LOGIN_FAILED));
 
         TokenResponse tokens = issueTokens(user.getId());
         return new LoginResponse(tokens.accessToken(), tokens.refreshToken(), false, user.isOnboarded());
     }
 
-    // ------------------------------------
+    private static String normalizeEmail(String email) {
+        return email.trim().toLowerCase(Locale.ROOT);
+    }
+
 
     // AUTH-03 재발급: 기존 Refresh Token은 폐기하고 새로 발급(교체). 만료된 토큰도 지운 뒤 401
     @Transactional(noRollbackFor = BusinessException.class)
