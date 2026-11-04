@@ -201,9 +201,9 @@
 ### 🗺️ Spot & Postcard
 
 ```json
-// GET /spots?category=PASS 🔓
+// GET /spots?category=PASS 🔓   토큰이 있으면 내가 방문 인증한 명소가 visited=true (로그인 전이면 모두 false)
 [ { "id": 2, "name": "문경새재 과거길", "region": "문경", "category": "PASS",
-    "description": "경사스러운 소식을 듣는 길", "latitude": 36.7, "longitude": 128.1 } ]
+    "description": "경사스러운 소식을 듣는 길", "latitude": 36.7, "longitude": 128.1, "visited": false } ]
 
 // POST /spots/{spotId}/visits   위치정보 동의 필수, 좌표는 거리 계산에만 쓰고 저장 X
 // 진행 중 돌탑 명소면 배경 해금, 처음 방문이면 엽서 지급
