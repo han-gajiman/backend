@@ -12,10 +12,11 @@ public record SpotResponse(
         String category,
         String description,
         double latitude,
-        double longitude
+        double longitude,
+        boolean visited // 내가 방문 인증한 명소인지. 로그인 전이면 false
 ) {
 
-    public static SpotResponse from(Spot spot) {
+    public static SpotResponse from(Spot spot, boolean visited) {
         return new SpotResponse(
                 spot.getId(),
                 spot.getName(),
@@ -23,7 +24,8 @@ public record SpotResponse(
                 spot.getCategory(),
                 spot.getDescription(),
                 spot.getLatitude().doubleValue(),
-                spot.getLongitude().doubleValue()
+                spot.getLongitude().doubleValue(),
+                visited
         );
     }
 }

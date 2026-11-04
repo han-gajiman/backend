@@ -2,6 +2,7 @@ package com.hangajiman.spot.controller;
 
 import java.util.List;
 
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -21,9 +22,10 @@ public class SpotController {
         this.spotService = spotService;
     }
 
-    // GET /spots?category=PASS 🔓 인증 불필요
+    // GET /spots?category=PASS 🔓 인증 불필요. 토큰이 있으면 내가 방문한 명소를 visited로 표시
     @GetMapping
-    public ApiResponse<List<SpotResponse>> getSpots(@RequestParam(required = false) String category) {
-        return ApiResponse.ok(spotService.getSpots(category));
+    public ApiResponse<List<SpotResponse>> getSpots(@RequestParam(required = false) String category,
+                                                    @AuthenticationPrincipal Long userId) {
+        return ApiResponse.ok(spotService.getSpots(category, userId));
     }
 }
