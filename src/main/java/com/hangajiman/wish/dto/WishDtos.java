@@ -64,6 +64,7 @@ public final class WishDtos {
             String content,
             LocalDate startDate,
             long stoneCount,
+            Long spotId, // 모아보기 카드의 명소 배경용
             String spotName,
             boolean visited,
             WishResult result // 회고 전(COMPLETED)이면 null

@@ -192,6 +192,7 @@ class ReflectionAndCollectionTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.length()").value(2))
                 .andExpect(jsonPath("$.data[*].wishId", contains(first.getId().intValue(), second.getId().intValue())))
+                .andExpect(jsonPath("$.data[0].spotId").isNumber())
                 .andExpect(jsonPath("$.data[0].spotName").value("호미곶 해맞이광장"))
                 .andExpect(jsonPath("$.data[0].stoneCount").value(3))
                 .andExpect(jsonPath("$.data[0].result").value("ACHIEVED"))
