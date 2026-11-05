@@ -35,12 +35,12 @@ CREATE TABLE password_reset_codes (
 );
 CREATE INDEX idx_password_reset_codes_user ON password_reset_codes(user_id);
 
--- [변경] 약관·위치정보 동의 이력
+-- [변경] 약관 동의 이력
 -- 기존 UNIQUE(user_id, type)을 제거해서 변경할 때마다 행을 추가 (최신 행 = 현재 상태)
 CREATE TABLE user_agreements (
   id         BIGSERIAL PRIMARY KEY,
   user_id    BIGINT      NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  type       VARCHAR(20) NOT NULL CHECK (type IN ('TERMS','PRIVACY','LOCATION')),
+  type       VARCHAR(20) NOT NULL CHECK (type IN ('TERMS','PRIVACY')),  -- [변경 11/5] 위치 동의는 서버에 저장 안 함 (V7)
   version    VARCHAR(10) NOT NULL,                         -- 약관 버전
   agreed     BOOLEAN     NOT NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -130,12 +130,11 @@ CREATE TABLE spot_visits (
   user_id     BIGINT      NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   spot_id     BIGINT      NOT NULL REFERENCES spots(id),
   wish_id     BIGINT      REFERENCES wishes(id) ON DELETE CASCADE,  -- 진행 중 돌탑 명소면 연결
-  distance_m  INT         NOT NULL,                        -- 인증 시점 명소까지 거리
   verified_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
-CREATE INDEX idx_spot_visits_user_spot ON spot_visits(user_id, spot_id);
+ALTER TABLE spot_visits ADD CONSTRAINT uq_spot_visits_user_spot UNIQUE (user_id, spot_id);  -- [변경 11/5] 회원당 명소 하나, 좌표·거리 컬럼 없음 (V7)
 CREATE INDEX idx_spot_visits_wish ON spot_visits(wish_id);
 
 -- 디지털 엽서 보관함

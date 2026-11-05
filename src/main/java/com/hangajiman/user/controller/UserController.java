@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.hangajiman.auth.service.AuthService;
 import com.hangajiman.global.response.ApiResponse;
-import com.hangajiman.user.dto.LocationAgreementRequest;
 import com.hangajiman.user.dto.MeResponse;
 import com.hangajiman.user.dto.OnboardingRequest;
 import com.hangajiman.user.dto.PushTokenRequest;
@@ -58,14 +57,6 @@ public class UserController {
     public ResponseEntity<Void> updatePushToken(@AuthenticationPrincipal Long userId,
                                                 @Valid @RequestBody PushTokenRequest request) {
         userService.updatePushToken(userId, request.pushToken());
-        return ResponseEntity.noContent().build();
-    }
-
-    // AUTH-05 PUT /users/me/agreements/location → 204
-    @PutMapping("/agreements/location")
-    public ResponseEntity<Void> updateLocationAgreement(@AuthenticationPrincipal Long userId,
-                                                        @Valid @RequestBody LocationAgreementRequest request) {
-        userService.updateLocationAgreement(userId, request.agreed());
         return ResponseEntity.noContent().build();
     }
 }

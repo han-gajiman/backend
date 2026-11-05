@@ -17,7 +17,6 @@
 | AUTH-03 | `POST /api/v1/auth/logout` 로그아웃 | 필요 | ✅ |
 | AUTH-02 | `POST /api/v1/users/me/onboarding` 온보딩 | 필요 | ✅ |
 | AUTH-04 | `GET /api/v1/users/me`, `PUT /api/v1/users/me/push-token` | 필요 | ✅ |
-| AUTH-05 | `PUT /api/v1/users/me/agreements/location` | 필요 | ✅ |
 | AUTH-06 | `DELETE /api/v1/users/me` 회원 탈퇴 | 필요 | ✅ |
 | WISH-03 | `POST /api/v1/wishes` 소원 등록 (돌탑 시작) | 필요 | ✅ |
 | - | `GET /api/v1/wishes/current` 진행 중 돌탑 | 필요 | ✅ |
@@ -88,7 +87,7 @@ psql -d hangajiman -c "insert into users(provider, provider_user_id) values ('KA
 curl "localhost:8080/api/v1/dev/token?userId=1"
 # 3) 토큰으로 호출 (온보딩부터)
 curl -H "Authorization: Bearer {토큰}" -H "Content-Type: application/json" \
-  -d '{"nickname":"소원지기","agreements":{"terms":true,"privacy":true,"location":false},"agreementVersion":"1.0"}' \
+  -d '{"nickname":"소원지기","agreements":{"terms":true,"privacy":true},"agreementVersion":"1.0"}' \
   localhost:8080/api/v1/users/me/onboarding
 ```
 

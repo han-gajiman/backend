@@ -34,7 +34,7 @@ class UserControllerTest {
 
     private static final String ONBOARDING_BODY = """
             {"nickname": "소원지기",
-             "agreements": {"terms": true, "privacy": true, "location": false},
+             "agreements": {"terms": true, "privacy": true},
              "agreementVersion": "1.0"}
             """;
 
@@ -79,7 +79,7 @@ class UserControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.nickname").value("소원지기"))
                 .andExpect(jsonPath("$.data.provider").value("KAKAO"))
-                .andExpect(jsonPath("$.data.agreements.location").value(false))
+                .andExpect(jsonPath("$.data.agreements").doesNotExist())
                 .andExpect(jsonPath("$.data.hasActiveWish").value(false))
                 .andExpect(jsonPath("$.data.journey").isEmpty());
     }
@@ -109,7 +109,7 @@ class UserControllerTest {
     void otherApisAreBlockedBeforeOnboarding() throws Exception {
         User user = newUser();
 
-        mockMvc.perform(as(user, put("/api/v1/users/me/agreements/location")).content("{\"agreed\": true}"))
+        mockMvc.perform(as(user, post("/api/v1/spots/1/visits")))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.error.code").value("ONBOARDING_REQUIRED"));
 
@@ -117,21 +117,6 @@ class UserControllerTest {
         mockMvc.perform(as(user, get("/api/v1/users/me")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.nickname").isEmpty());
-    }
-
-    @Test
-    void changeLocationAgreement() throws Exception {
-        User user = onboardedUser();
-
-        mockMvc.perform(as(user, put("/api/v1/users/me/agreements/location")).content("{\"agreed\": true}"))
-                .andExpect(status().isNoContent());
-        mockMvc.perform(as(user, get("/api/v1/users/me")))
-                .andExpect(jsonPath("$.data.agreements.location").value(true));
-
-        mockMvc.perform(as(user, put("/api/v1/users/me/agreements/location")).content("{\"agreed\": false}"))
-                .andExpect(status().isNoContent());
-        mockMvc.perform(as(user, get("/api/v1/users/me")))
-                .andExpect(jsonPath("$.data.agreements.location").value(false));
     }
 
     @Test
