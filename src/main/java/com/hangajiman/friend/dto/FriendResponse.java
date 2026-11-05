@@ -5,6 +5,8 @@ package com.hangajiman.friend.dto;
  */
 public record FriendResponse(Long friendId, String nickname, WishSummary wish) {
 
-    public record WishSummary(Long wishId, String content, long stoneCount, boolean stonedToday) {
+    // spotId·spotVisited: 친구 돌탑의 명소 배경용 (방문 전이면 일러스트를 흐리게)
+    public record WishSummary(Long wishId, String content, long stoneCount, boolean stonedToday,
+                              Long spotId, boolean spotVisited) {
     }
 }
