@@ -231,7 +231,8 @@
 
 // GET /friends?page=0&size=20 📄   친구 돌탑이 PRIVATE면 wish: null
 { "content": [ { "friendId": 4, "nickname": "지기",
-                 "wish": { "wishId": 12, "content": "토익 800점", "stoneCount": 8, "stonedToday": false } } ],
+                 "wish": { "wishId": 12, "content": "토익 800점", "stoneCount": 8, "stonedToday": false,
+                           "spotId": 8, "spotVisited": false } } ],
   "page": 0, "size": 20, "hasNext": false }
 
 // POST /wishes/{wishId}/cheers   친구(친구 공개 돌탑) 또는 익명 소원지기만, 작성 시 푸시

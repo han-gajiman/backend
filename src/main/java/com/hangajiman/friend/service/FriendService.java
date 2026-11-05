@@ -38,6 +38,7 @@ import com.hangajiman.user.repository.UserRepository;
 import com.hangajiman.wish.domain.Visibility;
 import com.hangajiman.wish.domain.Wish;
 import com.hangajiman.wish.domain.WishStatus;
+import com.hangajiman.wish.repository.WishRepository;
 
 @Service
 @Transactional(readOnly = true)
@@ -54,6 +55,7 @@ public class FriendService {
     private final FriendInviteRepository inviteRepository;
     private final FriendshipRepository friendshipRepository;
     private final UserRepository userRepository;
+    private final WishRepository wishRepository;
     private final NotificationService notificationService;
     private final Clock clock;
     private final Clock systemClock; // 초대 링크 만료는 실제 시간 기준 (시연용 시간 이동으로 만료되지 않게)
@@ -62,6 +64,7 @@ public class FriendService {
     public FriendService(FriendInviteRepository inviteRepository,
                          FriendshipRepository friendshipRepository,
                          UserRepository userRepository,
+                         WishRepository wishRepository,
                          NotificationService notificationService,
                          Clock clock,
                          @Qualifier(ClockConfig.SYSTEM_CLOCK) Clock systemClock,
@@ -69,6 +72,7 @@ public class FriendService {
         this.inviteRepository = inviteRepository;
         this.friendshipRepository = friendshipRepository;
         this.userRepository = userRepository;
+        this.wishRepository = wishRepository;
         this.notificationService = notificationService;
         this.clock = clock;
         this.systemClock = systemClock;
@@ -138,6 +142,7 @@ public class FriendService {
                                 FriendshipRepository.WishStoneCount::getStoneCount));
         Set<Long> stonedToday = wishIds.isEmpty() ? Set.of()
                 : Set.copyOf(friendshipRepository.findWishIdsStonedOn(wishIds, LocalDate.now(clock)));
+        Set<Long> visited = wishIds.isEmpty() ? Set.of() : Set.copyOf(wishRepository.findVisitedWishIds(wishIds));
 
         List<FriendResponse> content = friendIds.stream()
                 .filter(users::containsKey)
@@ -147,7 +152,9 @@ public class FriendService {
                             wish.getId(),
                             wish.getContent(),
                             stoneCounts.getOrDefault(wish.getId(), 0L),
-                            stonedToday.contains(wish.getId()));
+                            stonedToday.contains(wish.getId()),
+                            wish.getSpotId(),
+                            visited.contains(wish.getId()));
                     return new FriendResponse(friendId, users.get(friendId).getNickname(), summary);
                 })
                 .toList();

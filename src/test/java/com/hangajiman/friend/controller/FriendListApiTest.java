@@ -33,6 +33,8 @@ class FriendListApiTest extends FriendApiTestSupport {
                 .andExpect(jsonPath("$.data.content[0].wish.content").value("지기의 소원"))
                 .andExpect(jsonPath("$.data.content[0].wish.stoneCount").value(2))
                 .andExpect(jsonPath("$.data.content[0].wish.stonedToday").value(true))
+                .andExpect(jsonPath("$.data.content[0].wish.spotId").value(wish.getSpotId()))
+                .andExpect(jsonPath("$.data.content[0].wish.spotVisited").value(false))
                 .andExpect(jsonPath("$.data.page").value(0))
                 .andExpect(jsonPath("$.data.size").value(20))
                 .andExpect(jsonPath("$.data.hasNext").value(false));
