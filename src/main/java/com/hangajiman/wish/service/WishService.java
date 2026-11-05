@@ -128,7 +128,7 @@ public class WishService {
 
         return wishes.stream()
                 .map(w -> new WishSummary(w.getId(), w.getContent(), w.getStartDate(),
-                        stoneCounts.getOrDefault(w.getId(), 0L), spotNames.get(w.getSpotId()),
+                        stoneCounts.getOrDefault(w.getId(), 0L), w.getSpotId(), spotNames.get(w.getSpotId()),
                         visited.contains(w.getId()), w.getResult()))
                 .toList();
     }

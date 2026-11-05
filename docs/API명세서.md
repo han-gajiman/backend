@@ -182,7 +182,7 @@
 // GET /wishes?round=1   회차별 돌탑 모아보기 (첫 시작일부터 1년 = 1회차, 최대 12개라 페이지네이션 없음)
 // round 생략 시 현재 회차
 [ { "wishId": 10, "content": "백엔드 개발자로 취업하기", "startDate": "2026-10-22",
-    "stoneCount": 27, "spotName": "문경새재 과거길", "visited": true, "result": "ACHIEVED" } ]
+    "stoneCount": 27, "spotId": 2, "spotName": "문경새재 과거길", "visited": true, "result": "ACHIEVED" } ]
 ```
 
 ### 🪨 Stone
