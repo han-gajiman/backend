@@ -20,7 +20,6 @@
 | AUTH-02 | POST | `/users/me/onboarding` | 온보딩 (약관 동의 + 닉네임) |
 | AUTH-04 | GET | `/users/me` | 내 정보 |
 | AUTH-04 | PUT | `/users/me/push-token` | Expo 푸시 토큰 등록 |
-| AUTH-05 | PUT | `/users/me/agreements/location` | 위치정보 동의 변경 |
 | AUTH-06 | DELETE | `/users/me` | 회원 탈퇴 (즉시 삭제) |
 | WISH-02 | POST | `/ai/action-goals` | AI 실천 목표 추천 |
 | WISH-03 | POST | `/wishes` | 소원 등록 (돌탑 시작) |
@@ -30,7 +29,7 @@
 | TOWER-02 | POST | `/wishes/{wishId}/reflection` | 30일 완성 회고 |
 | TOWER-03 | GET | `/wishes?round=1` | 돌탑 모아보기 |
 | SPOT-01 | GET | `/spots` 🔓 | 명소 목록 (category 필터) |
-| SPOT-03 | POST | `/spots/{spotId}/visits` | 방문 인증 → 배경 해금 + 엽서 |
+| SPOT-03 | POST | `/spots/{spotId}/visits` | 방문 인증 결과 저장 → 배경 해금 (위치 정보 없음) |
 | SPOT-04 | GET | `/postcards` | 엽서 보관함 📄 |
 | FRIEND-01 | POST | `/friends/invites` | 초대 링크 생성 |
 | FRIEND-01 | POST | `/friends/invites/{inviteCode}/accept` | 초대 수락 |
@@ -41,7 +40,7 @@
 | NOTI-01 | GET / PATCH | `/notifications`, `/notifications/{id}/read` | 알림 목록 📄 / 읽음 |
 | DEMO-01 | POST | `/demo/time-travel` | 시간 이동 (시연 전용) |
 
-> 기능명세서에 추가된 DEMO-02(위치 인증 우회)는 아직 이 명세서에 엔드포인트가 없습니다. 방식(좌표 고정 / 반경 해제)이 정해지면 추가하세요.
+> DEMO-02(위치 인증 우회)는 앱에서 처리하므로 엔드포인트가 없습니다.
 
 ## 상세
 
@@ -67,15 +66,13 @@
 429 TOO_MANY_REQUESTS          계정 찾기 API를 짧은 시간에 너무 많이 호출 (IP·이메일 기준)
 403 ONBOARDING_REQUIRED        온보딩 미완료
 400 REQUIRED_AGREEMENT_MISSING 필수 약관 미동의
-403 LOCATION_CONSENT_REQUIRED  위치정보 미동의 상태에서 방문 인증
 404 WISH_NOT_FOUND             없는 돌탑 (돌·회고·공개 범위·응원 API 공통, 남의 돌탑은 403 WISH_NOT_OWNER)
 409 WISH_ALREADY_ACTIVE        진행 중 돌탑이 있는데 새로 등록
 403 WISH_NOT_OWNER             본인 돌탑 아님
 400 WISH_NOT_ACTIVE            기간 끝난 돌탑에 돌 쌓기
 403 TOWER_NOT_COMPLETED        30일 전 회고 시도
 409 STONE_ALREADY_TODAY        오늘 이미 돌 쌓음
-400 SPOT_OUT_OF_RANGE          인증 반경 밖
-409 SPOT_ALREADY_VISITED_TODAY 같은 명소 오늘 이미 인증
+404 SPOT_NOT_FOUND             없는 명소
 400 FRIEND_SELF_INVITE         본인 초대 수락
 409 FRIEND_ALREADY             이미 친구
 404 FRIEND_INVITE_NOT_FOUND    잘못되거나 만료된 초대 코드
@@ -125,23 +122,20 @@
 // POST /auth/logout
 { "refreshToken": "dGhpcyBpcyBh..." }   → 204
 
-// POST /users/me/onboarding   TERMS·PRIVACY 필수, LOCATION 선택
+// POST /users/me/onboarding   TERMS·PRIVACY 필수
 { "nickname": "석현",
-  "agreements": { "terms": true, "privacy": true, "location": false },
+  "agreements": { "terms": true, "privacy": true },
   "agreementVersion": "1.0" }
 → 204
 
 // GET /users/me
 { "id": 1, "nickname": "석현", "profileImageUrl": "https://...", "provider": "KAKAO",
-  "agreements": { "location": false }, "hasActiveWish": true,
+  "hasActiveWish": true,
   "journey": { "startedOn": "2026-10-22", "currentRound": 1, "reviewAt": "2027-10-22" } }
 // journey: 첫 돌탑 전이면 null
 
 // PUT /users/me/push-token
 { "pushToken": "ExponentPushToken[xxxx]" }   → 204
-
-// PUT /users/me/agreements/location
-{ "agreed": true }   → 204
 
 // DELETE /users/me   즉시 삭제
 // 1) 카카오 연결 끊기 (서버, KAKAO_ADMIN_KEY) / Google은 서버에 Google 토큰이 없어 앱에서 revokeAccess
@@ -203,14 +197,12 @@
 ```json
 // GET /spots?category=PASS 🔓   토큰이 있으면 내가 방문 인증한 명소가 visited=true (로그인 전이면 모두 false)
 [ { "id": 2, "name": "문경새재 과거길", "region": "문경", "category": "PASS",
-    "description": "경사스러운 소식을 듣는 길", "latitude": 36.7, "longitude": 128.1, "visited": false } ]
+    "description": "경사스러운 소식을 듣는 길", "latitude": 36.7, "longitude": 128.1, "radiusM": 500, "visited": false } ]
 
-// POST /spots/{spotId}/visits   위치정보 동의 필수, 좌표는 거리 계산에만 쓰고 저장 X
-// 진행 중 돌탑 명소면 배경 해금, 처음 방문이면 엽서 지급
-{ "latitude": 36.7001, "longitude": 128.1002 }
-→ 201 { "visitId": 5, "distanceM": 42, "backgroundUnlocked": true,
-        "postcard": { "postcardId": 3, "imageUrl": "https://..." } }
-// 실패: 403 LOCATION_CONSENT_REQUIRED, 400 SPOT_OUT_OF_RANGE (distanceM 포함)
+// POST /spots/{spotId}/visits   본문 없음. 앱이 기기 안에서 반경을 확인한 뒤 결과만 보냅니다 (11/5)
+// 좌표·거리·위치 동의는 서버로 보내거나 저장하지 않습니다. 서버는 진위를 검증하지 못합니다.
+→ 201 { "visitId": 5, "firstVisit": true }   // 이미 인증했으면 기존 기록, firstVisit=false
+// 실패: 404 SPOT_NOT_FOUND. 엽서 지급은 SPOT-04에서 추가
 
 // GET /postcards?page=0&size=20 📄
 { "content": [ { "postcardId": 3, "spotName": "문경새재 과거길", "imageUrl": "https://...",

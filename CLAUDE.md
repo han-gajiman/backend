@@ -28,7 +28,7 @@ com.hangajiman            (메인 클래스: HangajimanApplication)
 │   ├─ config/     ClockConfig (KST Clock 빈)
 │   └─ health/     GET /api/health
 ├─ auth/          소셜 로그인, 토큰 발급·재발급
-├─ user/          회원, 온보딩, 약관·위치 동의, 탈퇴
+├─ user/          회원, 온보딩, 약관 동의, 탈퇴
 ├─ wish/          소원(돌탑), 회고, 모아보기
 ├─ stone/         돌 쌓기
 ├─ spot/          명소, 방문 인증, 디지털 엽서
@@ -46,7 +46,7 @@ com.hangajiman            (메인 클래스: HangajimanApplication)
    - 기본 `Clock`(`DemoClock`)은 서비스 날짜용이고 시간 이동을 따라갑니다. **토큰 만료처럼 실제 시간이어야 하는 곳만** `@Qualifier(ClockConfig.SYSTEM_CLOCK)`을 씁니다. (토큰이 시간 이동을 따라가면 이동하는 순간 전부 만료되어 시연이 끊깁니다)
 2. **소원 수정 불가**: `wishes.content`, `wishes.action_goal`을 바꾸는 API를 만들지 마세요. 취소도 없습니다.
 3. **하루 1개**: 돌은 `UNIQUE(wish_id, stone_date)`로 보장하고, 서비스에서도 검증하세요. 돌 개수는 `COUNT(*)`로 셉니다.
-4. **위치정보**: 사용자 좌표는 거리 계산에만 쓰고 **저장하지 않습니다**(`spot_visits.distance_m`만 저장). `LOCATION` 동의가 없으면 방문 인증을 거부하세요.
+4. **위치정보를 받지 마세요**: 앱이 기기 안에서 반경을 계산하고 서버는 인증 결과만 받습니다. 좌표·거리·위치 동의를 받거나 저장하는 API·컬럼을 만들지 마세요. (결정됨 11/5)
 5. **인증 토큰**: Refresh Token은 해시만 저장하고, 재발급 때마다 교체합니다. 로그아웃과 탈퇴 시 삭제하세요.
 6. **회원 탈퇴**: 소셜 연결 끊기 → `DELETE FROM users`로 CASCADE 정리. `notifications.target_id`는 FK가 없으니 서비스 레이어에서 같이 정리하세요.
 7. **LLM**: 호출은 백엔드에서만 하고 API 키를 클라이언트에 노출하지 마세요. 타임아웃 5초, 1인 하루 10회, 실패하면 기본 추천 문구로 대체합니다. 소원 내용은 저장하지 않고 호출 시각만 `ai_suggestion_logs`에 남깁니다.

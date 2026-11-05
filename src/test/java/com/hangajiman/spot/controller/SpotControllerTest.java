@@ -72,7 +72,7 @@ class SpotControllerTest {
         User visitor = onboardedUser("spot-visitor");
         User other = onboardedUser("spot-other");
         Long spotId = jdbcTemplate.queryForObject("SELECT id FROM spots WHERE name = '문경새재 과거길'", Long.class);
-        jdbcTemplate.update("INSERT INTO spot_visits (user_id, spot_id, distance_m) VALUES (?, ?, 0)", visitor.getId(), spotId);
+        jdbcTemplate.update("INSERT INTO spot_visits (user_id, spot_id) VALUES (?, ?)", visitor.getId(), spotId);
 
         // 로그인 전
         mockMvc.perform(get("/api/v1/spots"))

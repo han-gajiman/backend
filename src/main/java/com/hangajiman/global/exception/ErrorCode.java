@@ -21,7 +21,6 @@ public enum ErrorCode {
     TOO_MANY_REQUESTS(HttpStatus.TOO_MANY_REQUESTS, "요청이 너무 많아요. 잠시 후 다시 시도해 주세요."),
     ONBOARDING_REQUIRED(HttpStatus.FORBIDDEN, "온보딩을 먼저 완료해 주세요."),
     REQUIRED_AGREEMENT_MISSING(HttpStatus.BAD_REQUEST, "필수 약관에 동의해 주세요."),
-    LOCATION_CONSENT_REQUIRED(HttpStatus.FORBIDDEN, "위치정보 이용에 동의해 주세요."),
 
     WISH_NOT_FOUND(HttpStatus.NOT_FOUND, "돌탑을 찾을 수 없어요."),
     WISH_ALREADY_ACTIVE(HttpStatus.CONFLICT, "이미 진행 중인 돌탑이 있어요."),
@@ -30,8 +29,7 @@ public enum ErrorCode {
     TOWER_NOT_COMPLETED(HttpStatus.FORBIDDEN, "아직 30일이 지나지 않았어요."),
     STONE_ALREADY_TODAY(HttpStatus.CONFLICT, "오늘은 이미 돌을 쌓았어요."),
 
-    SPOT_OUT_OF_RANGE(HttpStatus.BAD_REQUEST, "명소 반경 밖이에요."),
-    SPOT_ALREADY_VISITED_TODAY(HttpStatus.CONFLICT, "오늘 이미 인증한 명소예요."),
+    SPOT_NOT_FOUND(HttpStatus.NOT_FOUND, "명소를 찾을 수 없어요."),
 
     FRIEND_SELF_INVITE(HttpStatus.BAD_REQUEST, "본인의 초대는 수락할 수 없어요."),
     FRIEND_ALREADY(HttpStatus.CONFLICT, "이미 친구예요."),

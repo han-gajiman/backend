@@ -26,12 +26,21 @@ public interface WishRepository extends JpaRepository<Wish, Long> {
     List<Wish> findByUserIdAndRoundAndStatusInOrderByStartDateAsc(Long userId, int round,
                                                                     Collection<WishStatus> statuses);
 
-    // 여러 돌탑 중 명소 방문 인증을 한 돌탑 id
-    @Query(value = "SELECT DISTINCT wish_id FROM spot_visits WHERE wish_id IN (:wishIds)", nativeQuery = true)
+    // 여러 돌탑 중 그 회원이 돌탑의 명소를 방문 인증한 돌탑 id (돌탑 전후 언제 인증했든 상관없음)
+    @Query(value = """
+            SELECT w.id FROM wishes w
+              JOIN spot_visits v ON v.user_id = w.user_id AND v.spot_id = w.spot_id
+             WHERE w.id IN (:wishIds)
+            """, nativeQuery = true)
     List<Long> findVisitedWishIds(@Param("wishIds") Collection<Long> wishIds);
 
-    // 이 돌탑으로 명소 방문 인증을 했는지 (배경 해금). spot_visits는 SPOT-03에서 채워집니다.
-    @Query(value = "SELECT EXISTS (SELECT 1 FROM spot_visits WHERE wish_id = :wishId)", nativeQuery = true)
+    // 이 돌탑의 명소를 그 회원이 방문 인증했는지 (배경 해금)
+    @Query(value = """
+            SELECT EXISTS (
+              SELECT 1 FROM wishes w
+                JOIN spot_visits v ON v.user_id = w.user_id AND v.spot_id = w.spot_id
+               WHERE w.id = :wishId)
+            """, nativeQuery = true)
     boolean existsSpotVisit(@Param("wishId") Long wishId);
 
     // TOWER-01: 기간이 끝난 진행 중 돌탑 (완성 알림 대상)

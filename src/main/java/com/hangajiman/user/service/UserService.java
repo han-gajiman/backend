@@ -21,7 +21,6 @@ import com.hangajiman.user.repository.UserRepository;
 public class UserService {
 
     // 위치 동의만 바꿀 때 이전 기록이 없으면 쓰는 약관 버전
-    private static final String DEFAULT_AGREEMENT_VERSION = "1.0";
 
     private final UserRepository userRepository;
     private final UserAgreementRepository agreementRepository;
@@ -51,7 +50,6 @@ public class UserService {
         String version = request.agreementVersion();
         agreementRepository.save(new UserAgreement(userId, AgreementType.TERMS, version, true));
         agreementRepository.save(new UserAgreement(userId, AgreementType.PRIVACY, version, true));
-        agreementRepository.save(new UserAgreement(userId, AgreementType.LOCATION, version, agreements.location()));
 
         user.completeOnboarding(request.nickname().trim(), clock.instant());
     }
@@ -64,7 +62,6 @@ public class UserService {
                 user.getNickname(),
                 user.getProfileImageUrl(),
                 user.getProvider(),
-                new MeResponse.Agreements(hasAgreed(userId, AgreementType.LOCATION)),
                 userRepository.existsOpenWish(userId),
                 journeyOf(user)
         );
@@ -74,23 +71,6 @@ public class UserService {
     @Transactional
     public void updatePushToken(Long userId, String pushToken) {
         getUser(userId).updatePushToken(pushToken);
-    }
-
-    // AUTH-05 위치정보 동의 변경: 이력에 행을 추가합니다.
-    @Transactional
-    public void updateLocationAgreement(Long userId, boolean agreed) {
-        getUser(userId);
-        String version = agreementRepository.findFirstByUserIdAndTypeOrderByIdDesc(userId, AgreementType.LOCATION)
-                .map(UserAgreement::getVersion)
-                .orElse(DEFAULT_AGREEMENT_VERSION);
-        agreementRepository.save(new UserAgreement(userId, AgreementType.LOCATION, version, agreed));
-    }
-
-    // 현재 동의 상태 (가장 최근 행). 기록이 없으면 미동의
-    public boolean hasAgreed(Long userId, AgreementType type) {
-        return agreementRepository.findFirstByUserIdAndTypeOrderByIdDesc(userId, type)
-                .map(UserAgreement::isAgreed)
-                .orElse(false);
     }
 
     private MeResponse.Journey journeyOf(User user) {
