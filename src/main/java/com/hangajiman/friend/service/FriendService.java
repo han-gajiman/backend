@@ -37,6 +37,8 @@ import com.hangajiman.user.domain.User;
 import com.hangajiman.user.repository.UserRepository;
 import com.hangajiman.wish.domain.Visibility;
 import com.hangajiman.wish.domain.Wish;
+import com.hangajiman.spot.domain.Spot;
+import com.hangajiman.spot.repository.SpotRepository;
 import com.hangajiman.wish.domain.WishStatus;
 import com.hangajiman.wish.repository.WishRepository;
 
@@ -56,6 +58,7 @@ public class FriendService {
     private final FriendshipRepository friendshipRepository;
     private final UserRepository userRepository;
     private final WishRepository wishRepository;
+    private final SpotRepository spotRepository;
     private final NotificationService notificationService;
     private final Clock clock;
     private final Clock systemClock; // 초대 링크 만료는 실제 시간 기준 (시연용 시간 이동으로 만료되지 않게)
@@ -65,6 +68,7 @@ public class FriendService {
                          FriendshipRepository friendshipRepository,
                          UserRepository userRepository,
                          WishRepository wishRepository,
+                         SpotRepository spotRepository,
                          NotificationService notificationService,
                          Clock clock,
                          @Qualifier(ClockConfig.SYSTEM_CLOCK) Clock systemClock,
@@ -73,6 +77,7 @@ public class FriendService {
         this.friendshipRepository = friendshipRepository;
         this.userRepository = userRepository;
         this.wishRepository = wishRepository;
+        this.spotRepository = spotRepository;
         this.notificationService = notificationService;
         this.clock = clock;
         this.systemClock = systemClock;
@@ -143,6 +148,9 @@ public class FriendService {
         Set<Long> stonedToday = wishIds.isEmpty() ? Set.of()
                 : Set.copyOf(friendshipRepository.findWishIdsStonedOn(wishIds, LocalDate.now(clock)));
         Set<Long> visited = wishIds.isEmpty() ? Set.of() : Set.copyOf(wishRepository.findVisitedWishIds(wishIds));
+        Map<Long, String> spotNames = spotRepository.findAllById(
+                        visibleWishes.values().stream().map(Wish::getSpotId).distinct().toList()).stream()
+                .collect(Collectors.toMap(Spot::getId, Spot::getName));
 
         List<FriendResponse> content = friendIds.stream()
                 .filter(users::containsKey)
@@ -154,6 +162,7 @@ public class FriendService {
                             stoneCounts.getOrDefault(wish.getId(), 0L),
                             stonedToday.contains(wish.getId()),
                             wish.getSpotId(),
+                            spotNames.get(wish.getSpotId()),
                             visited.contains(wish.getId()));
                     return new FriendResponse(friendId, users.get(friendId).getNickname(), summary);
                 })
