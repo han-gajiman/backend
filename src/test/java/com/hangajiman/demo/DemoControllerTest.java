@@ -1,5 +1,6 @@
 package com.hangajiman.demo;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -15,6 +16,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
@@ -50,6 +52,9 @@ class DemoControllerTest {
     @Autowired
     private DemoClock clock;
 
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+
     @AfterEach
     void resetClock() {
         clock.reset();
@@ -79,6 +84,26 @@ class DemoControllerTest {
                 .andExpect(jsonPath("$.data.status").value("COMPLETED"))
                 .andExpect(jsonPath("$.data.dayIndex").value(30))
                 .andExpect(jsonPath("$.data.daysLeft").value(0));
+    }
+
+    @Test
+    void travelingAYearNotifiesYearReviewOnce() throws Exception {
+        User user = onboardedUser();
+        LocalDate today = LocalDate.now(clock);
+        user.startJourneyIfFirst(today);
+        userRepository.saveAndFlush(user);
+        wishRepository.saveAndFlush(Wish.create(user.getId(), 2L, "소원", "실천", Visibility.PRIVATE, today, 1));
+        String bearer = "Bearer " + jwtProvider.createAccessToken(user.getId());
+
+        for (int days : new int[] {365, 1}) {
+            mockMvc.perform(post("/api/v1/demo/time-travel").header(HttpHeaders.AUTHORIZATION, bearer)
+                            .contentType(MediaType.APPLICATION_JSON).content("{\"days\": " + days + "}"))
+                    .andExpect(status().isOk());
+        }
+
+        assertThat(jdbcTemplate.queryForList(
+                "SELECT target_id FROM notifications WHERE user_id = ? AND type = 'YEAR_REVIEW'",
+                Long.class, user.getId())).containsExactly(1L);
     }
 
     @Test

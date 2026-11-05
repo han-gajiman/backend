@@ -28,6 +28,8 @@
 | STONE-01 | POST / GET | `/wishes/{wishId}/stones` | 오늘의 돌 / 돌 목록 📄 |
 | TOWER-02 | POST | `/wishes/{wishId}/reflection` | 30일 완성 회고 |
 | TOWER-03 | GET | `/wishes?round=1` | 돌탑 모아보기 |
+| TOWER-03 | GET | `/wishes/rounds` | 소원 묶음(회차) 목록, 1년 회고 포함 |
+| TOWER-04 | POST | `/wishes/rounds/{round}/review` | 1년 회고 쓰기 |
 | SPOT-01 | GET | `/spots` 🔓 | 명소 목록 (category 필터) |
 | SPOT-03 | POST | `/spots/{spotId}/visits` | 방문 인증 결과 저장 → 배경 해금 (위치 정보 없음) |
 | SPOT-04 | GET | `/postcards` | 엽서 보관함 📄 |
@@ -71,6 +73,8 @@
 403 WISH_NOT_OWNER             본인 돌탑 아님
 400 WISH_NOT_ACTIVE            기간 끝난 돌탑에 돌 쌓기
 403 TOWER_NOT_COMPLETED        30일 전 회고 시도
+400 YEAR_REVIEW_NOT_AVAILABLE  1년이 안 지났거나 돌탑이 없는 회차에 1년 회고 시도
+409 YEAR_REVIEW_ALREADY        이미 1년 회고를 남김
 409 STONE_ALREADY_TODAY        오늘 이미 돌 쌓음
 404 SPOT_NOT_FOUND             없는 명소
 400 FRIEND_SELF_INVITE         본인 초대 수락
@@ -130,9 +134,7 @@
 
 // GET /users/me
 { "id": 1, "nickname": "석현", "profileImageUrl": "https://...", "provider": "KAKAO",
-  "hasActiveWish": true,
-  "journey": { "startedOn": "2026-10-22", "currentRound": 1, "reviewAt": "2027-10-22" } }
-// journey: 첫 돌탑 전이면 null
+  "hasActiveWish": true }
 
 // PUT /users/me/push-token
 { "pushToken": "ExponentPushToken[xxxx]" }   → 204
@@ -175,8 +177,18 @@
 
 // GET /wishes?round=1   회차별 돌탑 모아보기 (첫 시작일부터 1년 = 1회차, 최대 12개라 페이지네이션 없음)
 // round 생략 시 현재 회차
-[ { "wishId": 10, "content": "백엔드 개발자로 취업하기", "startDate": "2026-10-22",
-    "stoneCount": 27, "spotId": 2, "spotName": "문경새재 과거길", "visited": true, "result": "ACHIEVED" } ]
+[ { "wishId": 10, "content": "백엔드 개발자로 취업하기", "startDate": "2026-10-22", "endDate": "2026-11-20",
+    "stoneCount": 27, "spotId": 2, "spotName": "문경새재 과거길", "visited": true, "result": "ACHIEVED",
+    "reflection": "매일 쌓으니 끝까지 해냈다" } ]
+// reflection: 30일 회고. 안 썼으면 null
+
+// GET /wishes/rounds   소원 묶음(회차) 목록. 돌탑이 있는 회차 + 현재 회차, 오래된 순
+// reviewAt: 1년 회고를 쓸 수 있는 날 (첫 돌탑 전이면 null), review: 안 썼으면 null
+[ { "round": 1, "towerCount": 12, "reviewAt": "2027-10-22", "canWriteReview": true, "review": null } ]
+
+// POST /wishes/rounds/{round}/review   1년 회고. 끝난 회차에 돌탑이 있을 때 한 번만, 수정 불가
+{ "content": "끝까지 해내는 사람이 되었어요" }   // 200자 이내
+→ 201 { "round": 1, "content": "끝까지 해내는 사람이 되었어요" }
 ```
 
 ### 🪨 Stone

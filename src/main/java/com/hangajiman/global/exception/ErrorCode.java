@@ -30,6 +30,8 @@ public enum ErrorCode {
     STONE_ALREADY_TODAY(HttpStatus.CONFLICT, "오늘은 이미 돌을 쌓았어요."),
 
     SPOT_NOT_FOUND(HttpStatus.NOT_FOUND, "명소를 찾을 수 없어요."),
+    YEAR_REVIEW_NOT_AVAILABLE(HttpStatus.BAD_REQUEST, "1년이 지나고 돌탑이 있을 때 쓸 수 있어요."),
+    YEAR_REVIEW_ALREADY(HttpStatus.CONFLICT, "이미 1년 회고를 남겼어요."),
 
     FRIEND_SELF_INVITE(HttpStatus.BAD_REQUEST, "본인의 초대는 수락할 수 없어요."),
     FRIEND_ALREADY(HttpStatus.CONFLICT, "이미 친구예요."),

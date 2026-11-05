@@ -63,11 +63,24 @@ public final class WishDtos {
             Long wishId,
             String content,
             LocalDate startDate,
+            LocalDate endDate,
             long stoneCount,
             Long spotId, // 모아보기 카드의 명소 배경용
             String spotName,
             boolean visited,
-            WishResult result // 회고 전(COMPLETED)이면 null
+            WishResult result, // 회고 전(COMPLETED)이면 null
+            String reflection // 30일 회고. 안 썼으면 null
     ) {
+    }
+
+    // GET /wishes/rounds 항목. reviewAt: 1년 회고를 쓸 수 있는 날 (첫 돌탑 전이면 null), review: 안 썼으면 null
+    public record RoundSummary(int round, long towerCount, LocalDate reviewAt, boolean canWriteReview, String review) {
+    }
+
+    // POST /wishes/rounds/{round}/review
+    public record YearReviewRequest(@NotBlank @Size(max = 200) String content) {
+    }
+
+    public record YearReviewResponse(int round, String content) {
     }
 }

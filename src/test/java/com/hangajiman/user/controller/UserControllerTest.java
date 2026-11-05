@@ -81,7 +81,7 @@ class UserControllerTest {
                 .andExpect(jsonPath("$.data.provider").value("KAKAO"))
                 .andExpect(jsonPath("$.data.agreements").doesNotExist())
                 .andExpect(jsonPath("$.data.hasActiveWish").value(false))
-                .andExpect(jsonPath("$.data.journey").isEmpty());
+                .andExpect(jsonPath("$.data.journey").doesNotExist());
     }
 
     @Test
@@ -132,22 +132,16 @@ class UserControllerTest {
     }
 
     @Test
-    void journeyAndActiveWish() throws Exception {
+    void activeWish() throws Exception {
         User user = onboardedUser();
         LocalDate today = LocalDate.now(clock);
-        LocalDate startedOn = today.minusDays(400); // 2회차
-        user.startJourneyIfFirst(startedOn);
-        userRepository.saveAndFlush(user);
         jdbcTemplate.update("""
                 INSERT INTO wishes (user_id, spot_id, content, action_goal, start_date, end_date, round)
-                VALUES (?, 1, '소원', '실천', ?, ?, 2)
+                VALUES (?, 1, '소원', '실천', ?, ?, 1)
                 """, user.getId(), today, today.plusDays(29));
 
         mockMvc.perform(as(user, get("/api/v1/users/me")))
-                .andExpect(jsonPath("$.data.hasActiveWish").value(true))
-                .andExpect(jsonPath("$.data.journey.startedOn").value(startedOn.toString()))
-                .andExpect(jsonPath("$.data.journey.currentRound").value(2))
-                .andExpect(jsonPath("$.data.journey.reviewAt").value(startedOn.plusDays(730).toString()));
+                .andExpect(jsonPath("$.data.hasActiveWish").value(true));
     }
 
     @Test

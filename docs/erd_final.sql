@@ -202,6 +202,17 @@ CREATE TABLE anonymous_keepers (
 CREATE INDEX idx_keepers_user ON anonymous_keepers(keeper_user_id);
 
 -- [변경] 알림 (앱 내 + 푸시 발송 기록)
+-- 1년 회고: 끝난 회차에 한 번 쓰고 수정 불가 (TOWER-04)
+CREATE TABLE year_reviews (
+  id         BIGSERIAL PRIMARY KEY,
+  user_id    BIGINT       NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  round      INT          NOT NULL,
+  content    VARCHAR(200) NOT NULL,
+  created_at TIMESTAMPTZ  NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ  NOT NULL DEFAULT now(),
+  UNIQUE (user_id, round)
+);
+
 -- actor_id 추가: 보낸 사람 (CHEER, NUDGE). 시스템 알림은 NULL
 -- target_id 의미 (타입별 약속):
 --   CHEER           → cheers.id

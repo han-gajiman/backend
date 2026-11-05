@@ -25,8 +25,10 @@
 | TOWER-01 | 30일 완성 처리 (매시간 자동, 완성 알림 생성) | - | ✅ |
 | WISH-04 | `PATCH /api/v1/wishes/{wishId}/visibility` 공개 범위 변경 (PRIVATE·FRIENDS, 본인만) | 필요 | ✅ |
 | TOWER-02 | `POST /api/v1/wishes/{wishId}/reflection` 완성 회고 (→ CLOSED, 새 소원 가능) | 필요 | ✅ |
-| TOWER-04 | 1년 회고 알림 (첫 시작일 +365일마다, 회차당 한 번, 매시간 확인·시간 이동 직후 실행) | - | ✅ |
+| TOWER-04 | 1년 회고 알림 (첫 시작일 +365일마다, 회차당 한 번, 돌탑 있는 회차만, 매시간 확인·시간 이동 직후 실행) | - | ✅ |
+| TOWER-04 | `POST /api/v1/wishes/rounds/{round}/review` 1년 회고 쓰기 (끝난 회차, 한 번만) | 필요 | ✅ |
 | TOWER-03 | `GET /api/v1/wishes?round=` 회차별 돌탑 모아보기 (생략 시 현재 회차) | 필요 | ✅ |
+| TOWER-03 | `GET /api/v1/wishes/rounds` 회차 목록과 1년 회고 | 필요 | ✅ |
 | DEMO-01 | `POST /api/v1/demo/time-travel` 시연용 시간 이동 (`local`·`demo` 프로필 전용) | 필요 | ✅ |
 | FRIEND-01 | `POST /api/v1/friends/invites` 초대 링크 생성, `POST /api/v1/friends/invites/{inviteCode}/accept` 초대 수락 | 필요 | ✅ |
 | FRIEND-02 | `GET /api/v1/friends?page=&size=` 친구 목록 + 돌탑 요약 | 필요 | ✅ |
