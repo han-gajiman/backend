@@ -127,9 +127,9 @@ public class WishService {
                 .collect(Collectors.toMap(Spot::getId, Spot::getName));
 
         return wishes.stream()
-                .map(w -> new WishSummary(w.getId(), w.getContent(), w.getStartDate(),
+                .map(w -> new WishSummary(w.getId(), w.getContent(), w.getStartDate(), w.getEndDate(),
                         stoneCounts.getOrDefault(w.getId(), 0L), w.getSpotId(), spotNames.get(w.getSpotId()),
-                        visited.contains(w.getId()), w.getResult()))
+                        visited.contains(w.getId()), w.getResult(), w.getReflection()))
                 .toList();
     }
 

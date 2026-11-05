@@ -1,7 +1,5 @@
 package com.hangajiman.user.dto;
 
-import java.time.LocalDate;
-
 import com.hangajiman.user.domain.SocialProvider;
 
 /**
@@ -12,10 +10,6 @@ public record MeResponse(
         String nickname,
         String profileImageUrl,
         SocialProvider provider,
-        boolean hasActiveWish,
-        Journey journey // 첫 돌탑 전이면 null
+        boolean hasActiveWish
 ) {
-
-    public record Journey(LocalDate startedOn, int currentRound, LocalDate reviewAt) {
-    }
 }

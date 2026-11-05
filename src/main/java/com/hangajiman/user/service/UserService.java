@@ -1,7 +1,6 @@
 package com.hangajiman.user.service;
 
 import java.time.Clock;
-import java.time.LocalDate;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -62,8 +61,7 @@ public class UserService {
                 user.getNickname(),
                 user.getProfileImageUrl(),
                 user.getProvider(),
-                userRepository.existsOpenWish(userId),
-                journeyOf(user)
+                userRepository.existsOpenWish(userId)
         );
     }
 
@@ -71,13 +69,5 @@ public class UserService {
     @Transactional
     public void updatePushToken(Long userId, String pushToken) {
         getUser(userId).updatePushToken(pushToken);
-    }
-
-    private MeResponse.Journey journeyOf(User user) {
-        if (user.getJourneyStartedOn() == null) {
-            return null;
-        }
-        int currentRound = user.roundOf(LocalDate.now(clock));
-        return new MeResponse.Journey(user.getJourneyStartedOn(), currentRound, user.reviewDateOf(currentRound));
     }
 }

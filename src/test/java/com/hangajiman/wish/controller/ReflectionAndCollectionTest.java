@@ -196,10 +196,13 @@ class ReflectionAndCollectionTest {
                 .andExpect(jsonPath("$.data[0].spotName").value("호미곶 해맞이광장"))
                 .andExpect(jsonPath("$.data[0].stoneCount").value(3))
                 .andExpect(jsonPath("$.data[0].result").value("ACHIEVED"))
+                .andExpect(jsonPath("$.data[0].reflection").value("좋았다"))
+                .andExpect(jsonPath("$.data[0].endDate").value(today().minusDays(71).toString()))
                 .andExpect(jsonPath("$.data[0].visited").value(false))
                 .andExpect(jsonPath("$.data[0].startDate").value(today().minusDays(100).toString()))
                 .andExpect(jsonPath("$.data[1].stoneCount").value(1))
-                .andExpect(jsonPath("$.data[1].result").isEmpty());
+                .andExpect(jsonPath("$.data[1].result").isEmpty())
+                .andExpect(jsonPath("$.data[1].reflection").isEmpty());
     }
 
     @Test
@@ -247,5 +250,118 @@ class ReflectionAndCollectionTest {
         wish(other, 2, today().minusDays(40), "CLOSED");
 
         mockMvc.perform(as(me, get("/api/v1/wishes"))).andExpect(jsonPath("$.data.length()").value(0));
+    }
+
+    // --- TOWER-04 1년 회고 ---
+
+    private String reviewUrl(int round) {
+        return "/api/v1/wishes/rounds/" + round + "/review";
+    }
+
+    @Test
+    void roundsListsTowerRoundsAndCurrent() throws Exception {
+        User user = onboardedUser(today().minusDays(400));
+        wish(user, 1, today().minusDays(400), "CLOSED"); // 1회차
+        wish(user, 2, today().minusDays(64), "COMPLETED"); // 끝난 날이 시작 365일째 → 2회차
+
+        mockMvc.perform(as(user, get("/api/v1/wishes/rounds")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.length()").value(2))
+                .andExpect(jsonPath("$.data[0].round").value(1))
+                .andExpect(jsonPath("$.data[0].towerCount").value(1))
+                .andExpect(jsonPath("$.data[0].reviewAt").value(today().minusDays(35).toString()))
+                .andExpect(jsonPath("$.data[0].canWriteReview").value(true))
+                .andExpect(jsonPath("$.data[0].review").isEmpty())
+                .andExpect(jsonPath("$.data[1].round").value(2))
+                .andExpect(jsonPath("$.data[1].towerCount").value(1))
+                .andExpect(jsonPath("$.data[1].canWriteReview").value(false));
+    }
+
+    @Test
+    void newUserHasOnlyFirstRound() throws Exception {
+        User user = User.create(SocialProvider.KAKAO, "kakao-" + System.nanoTime(), null);
+        user.completeOnboarding("소원지기", clock.instant());
+        userRepository.saveAndFlush(user);
+
+        mockMvc.perform(as(user, get("/api/v1/wishes/rounds")))
+                .andExpect(jsonPath("$.data.length()").value(1))
+                .andExpect(jsonPath("$.data[0].round").value(1))
+                .andExpect(jsonPath("$.data[0].towerCount").value(0))
+                .andExpect(jsonPath("$.data[0].reviewAt").isEmpty())
+                .andExpect(jsonPath("$.data[0].canWriteReview").value(false));
+    }
+
+    @Test
+    void writeYearReviewOnceWithFewerThan12Towers() throws Exception {
+        User user = onboardedUser(today().minusDays(400));
+        wish(user, 1, today().minusDays(400), "CLOSED");
+
+        mockMvc.perform(as(user, post(reviewUrl(1))).content("{\"content\": \" 끝까지 하는 사람 \"}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.data.round").value(1))
+                .andExpect(jsonPath("$.data.content").value("끝까지 하는 사람"));
+
+        mockMvc.perform(as(user, get("/api/v1/wishes/rounds")))
+                .andExpect(jsonPath("$.data[0].review").value("끝까지 하는 사람"))
+                .andExpect(jsonPath("$.data[0].canWriteReview").value(false));
+
+        mockMvc.perform(as(user, post(reviewUrl(1))).content("{\"content\": \"다시 쓰기\"}"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.error.code").value("YEAR_REVIEW_ALREADY"));
+    }
+
+    @Test
+    void cannotWriteReviewBeforeYearPassesOrWithoutTowers() throws Exception {
+        User user = onboardedUser(today().minusDays(800)); // 지금 3회차
+        wish(user, 1, today().minusDays(800), "CLOSED"); // 1회차
+        wish(user, 2, today().minusDays(60), "CLOSED"); // 3회차
+        String body = "{\"content\": \"회고\"}";
+
+        for (int round : new int[] {2, 3, 4}) { // 돌탑 없는 회차, 현재 회차, 아직 안 온 회차
+            mockMvc.perform(as(user, post(reviewUrl(round))).content(body))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.error.code").value("YEAR_REVIEW_NOT_AVAILABLE"));
+        }
+    }
+
+    @Test
+    void yearReviewOn364thAndNext() throws Exception {
+        User justBefore = onboardedUser(today().minusDays(364));
+        wish(justBefore, 1, today().minusDays(364), "CLOSED");
+        User justAfter = onboardedUser(today().minusDays(365));
+        wish(justAfter, 1, today().minusDays(365), "CLOSED");
+        String body = "{\"content\": \"회고\"}";
+
+        mockMvc.perform(as(justBefore, post(reviewUrl(1))).content(body)).andExpect(status().isBadRequest());
+        mockMvc.perform(as(justAfter, post(reviewUrl(1))).content(body)).andExpect(status().isCreated());
+    }
+
+    @Test
+    void yearReviewLengthIsChecked() throws Exception {
+        User user = onboardedUser(today().minusDays(400));
+        wish(user, 1, today().minusDays(400), "CLOSED");
+
+        mockMvc.perform(as(user, post(reviewUrl(1))).content("{\"content\": \"" + "가".repeat(201) + "\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error.code").value("INVALID_INPUT"));
+        mockMvc.perform(as(user, post(reviewUrl(1))).content("{\"content\": \"   \"}"))
+                .andExpect(status().isBadRequest());
+        mockMvc.perform(as(user, post(reviewUrl(1))).content("{\"content\": \"" + "가".repeat(200) + "\"}"))
+                .andExpect(status().isCreated());
+    }
+
+    @Test
+    void yearReviewIsPerUser() throws Exception {
+        User me = onboardedUser(today().minusDays(400));
+        User other = onboardedUser(today().minusDays(400));
+        wish(me, 1, today().minusDays(400), "CLOSED");
+        wish(other, 1, today().minusDays(400), "CLOSED");
+
+        mockMvc.perform(as(other, post(reviewUrl(1))).content("{\"content\": \"다른 사람 회고\"}"))
+                .andExpect(status().isCreated());
+
+        mockMvc.perform(as(me, get("/api/v1/wishes/rounds")))
+                .andExpect(jsonPath("$.data[0].review").isEmpty())
+                .andExpect(jsonPath("$.data[0].canWriteReview").value(true));
     }
 }

@@ -26,6 +26,21 @@ public interface WishRepository extends JpaRepository<Wish, Long> {
     List<Wish> findByUserIdAndRoundAndStatusInOrderByStartDateAsc(Long userId, int round,
                                                                     Collection<WishStatus> statuses);
 
+    interface RoundTowerCount {
+        int getRound();
+
+        long getTowerCount();
+    }
+
+    // 회차별 완성 돌탑 수
+    @Query(value = """
+            SELECT round AS round, COUNT(*) AS towerCount
+              FROM wishes
+             WHERE user_id = :userId AND status <> 'ACTIVE'
+             GROUP BY round
+            """, nativeQuery = true)
+    List<RoundTowerCount> countTowersByRound(@Param("userId") Long userId);
+
     // 여러 돌탑 중 그 회원이 돌탑의 명소를 방문 인증한 돌탑 id (돌탑 전후 언제 인증했든 상관없음)
     @Query(value = """
             SELECT w.id FROM wishes w

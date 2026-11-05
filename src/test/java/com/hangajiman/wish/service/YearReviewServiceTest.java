@@ -40,6 +40,14 @@ class YearReviewServiceTest {
         return userRepository.saveAndFlush(user);
     }
 
+    private void tower(User user, int round) {
+        LocalDate start = user.getJourneyStartedOn().plusDays((round - 1) * 365L);
+        jdbcTemplate.update("""
+                INSERT INTO wishes (user_id, spot_id, content, action_goal, start_date, end_date, status, round)
+                VALUES (?, 1, '소원', '실천', ?, ?, 'CLOSED', ?)
+                """, user.getId(), start, start.plusDays(29), round);
+    }
+
     private List<Map<String, Object>> reviewsOf(User user) {
         return jdbcTemplate.queryForList(
                 "SELECT target_id, message FROM notifications WHERE user_id = ? AND type = 'YEAR_REVIEW'", user.getId());
@@ -48,18 +56,20 @@ class YearReviewServiceTest {
     @Test
     void notifiesAfter365Days() {
         User user = userStartedDaysAgo(365);
+        tower(user, 1);
 
         yearReviewService.notifyDue();
 
         List<Map<String, Object>> reviews = reviewsOf(user);
         assertThat(reviews).hasSize(1);
         assertThat(reviews.get(0).get("target_id")).isEqualTo(1L);
-        assertThat(reviews.get(0).get("message")).isEqualTo("1회차 1년이 지났어요. 그동안 쌓은 돌탑을 돌아봐요");
+        assertThat(reviews.get(0).get("message")).isEqualTo("1년이 지났어요. 그동안 쌓은 돌탑을 돌아봐요");
     }
 
     @Test
     void notBefore365Days() {
         User user = userStartedDaysAgo(364);
+        tower(user, 1);
 
         yearReviewService.notifyDue();
 
@@ -69,6 +79,7 @@ class YearReviewServiceTest {
     @Test
     void secondYearSendsRound2() {
         User user = userStartedDaysAgo(730);
+        tower(user, 2);
 
         yearReviewService.notifyDue();
 
@@ -78,11 +89,22 @@ class YearReviewServiceTest {
     @Test
     void sendsOncePerRound() {
         User user = userStartedDaysAgo(400);
+        tower(user, 1);
 
         yearReviewService.notifyDue();
         yearReviewService.notifyDue();
 
         assertThat(reviewsOf(user)).hasSize(1);
+    }
+
+    @Test
+    void roundWithoutTowerIsSkipped() {
+        User user = userStartedDaysAgo(730);
+        tower(user, 1); // 2회차에는 돌탑이 없음
+
+        yearReviewService.notifyDue();
+
+        assertThat(reviewsOf(user)).isEmpty();
     }
 
     @Test
