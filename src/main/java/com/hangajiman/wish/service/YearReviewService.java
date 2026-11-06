@@ -19,11 +19,16 @@ import com.hangajiman.global.exception.BusinessException;
 import com.hangajiman.global.exception.ErrorCode;
 import com.hangajiman.notification.domain.NotificationType;
 import com.hangajiman.notification.service.NotificationService;
+import com.hangajiman.spot.domain.Spot;
+import com.hangajiman.spot.domain.SpotVisit;
+import com.hangajiman.spot.repository.SpotRepository;
+import com.hangajiman.spot.repository.SpotVisitRepository;
 import com.hangajiman.user.domain.User;
 import com.hangajiman.user.repository.UserRepository;
 import com.hangajiman.user.service.UserService;
 import com.hangajiman.wish.domain.YearReview;
 import com.hangajiman.wish.dto.WishDtos.RoundSummary;
+import com.hangajiman.wish.dto.WishDtos.RoundVisit;
 import com.hangajiman.wish.dto.WishDtos.YearReviewResponse;
 import com.hangajiman.wish.repository.WishRepository;
 import com.hangajiman.wish.repository.YearReviewRepository;
@@ -43,16 +48,20 @@ public class YearReviewService {
     private final UserService userService;
     private final WishRepository wishRepository;
     private final YearReviewRepository yearReviewRepository;
+    private final SpotVisitRepository spotVisitRepository;
+    private final SpotRepository spotRepository;
     private final NotificationService notificationService;
     private final Clock clock;
 
     public YearReviewService(UserRepository userRepository, UserService userService, WishRepository wishRepository,
-                             YearReviewRepository yearReviewRepository, NotificationService notificationService,
-                             Clock clock) {
+                             YearReviewRepository yearReviewRepository, SpotVisitRepository spotVisitRepository,
+                             SpotRepository spotRepository, NotificationService notificationService, Clock clock) {
         this.userRepository = userRepository;
         this.userService = userService;
         this.wishRepository = wishRepository;
         this.yearReviewRepository = yearReviewRepository;
+        this.spotVisitRepository = spotVisitRepository;
+        this.spotRepository = spotRepository;
         this.notificationService = notificationService;
         this.clock = clock;
     }
@@ -68,15 +77,28 @@ public class YearReviewService {
                 .forEach(row -> towerCounts.put(row.getRound(), row.getTowerCount()));
         Map<Integer, String> reviews = yearReviewRepository.findByUserId(userId).stream()
                 .collect(Collectors.toMap(YearReview::getRound, YearReview::getContent));
+        Map<Integer, List<RoundVisit>> visits = visitsByRound(user);
 
         return towerCounts.entrySet().stream()
                 .map(entry -> {
                     int round = entry.getKey();
                     String review = reviews.get(round);
                     return new RoundSummary(round, entry.getValue(), user.reviewDateOf(round),
-                            review == null && round < currentRound && entry.getValue() > 0, review);
+                            review == null && round < currentRound && entry.getValue() > 0, review,
+                            visits.getOrDefault(round, List.of()));
                 })
                 .toList();
+    }
+
+    // 방문 인증을 인증한 날이 속한 회차로 묶습니다. 오래된 순
+    private Map<Integer, List<RoundVisit>> visitsByRound(User user) {
+        List<SpotVisit> visits = spotVisitRepository.findByUserIdOrderByVerifiedAtAsc(user.getId());
+        Map<Long, String> spotNames = spotRepository.findAllById(visits.stream().map(SpotVisit::getSpotId).toList()).stream()
+                .collect(Collectors.toMap(Spot::getId, Spot::getName));
+        return visits.stream()
+                .map(visit -> new RoundVisit(visit.getSpotId(), spotNames.get(visit.getSpotId()),
+                        LocalDate.ofInstant(visit.getVerifiedAt(), clock.getZone())))
+                .collect(Collectors.groupingBy(visit -> user.roundOf(visit.visitedOn())));
     }
 
     // POST /wishes/rounds/{round}/review: 끝난 회차에 돌탑이 있을 때 한 번만

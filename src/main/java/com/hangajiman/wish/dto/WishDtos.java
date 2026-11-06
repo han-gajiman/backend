@@ -1,6 +1,7 @@
 package com.hangajiman.wish.dto;
 
 import java.time.LocalDate;
+import java.util.List;
 
 import com.hangajiman.wish.domain.Visibility;
 import com.hangajiman.wish.domain.WishResult;
@@ -74,7 +75,12 @@ public final class WishDtos {
     }
 
     // GET /wishes/rounds 항목. reviewAt: 1년 회고를 쓸 수 있는 날 (첫 돌탑 전이면 null), review: 안 썼으면 null
-    public record RoundSummary(int round, long towerCount, LocalDate reviewAt, boolean canWriteReview, String review) {
+    public record RoundSummary(int round, long towerCount, LocalDate reviewAt, boolean canWriteReview, String review,
+                               List<RoundVisit> visits) {
+    }
+
+    // 그 회차에 방문 인증한 명소. 위치 정보 없이 언제 인증했는지만
+    public record RoundVisit(Long spotId, String spotName, LocalDate visitedOn) {
     }
 
     // POST /wishes/rounds/{round}/review
