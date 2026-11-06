@@ -364,4 +364,35 @@ class ReflectionAndCollectionTest {
                 .andExpect(jsonPath("$.data[0].review").isEmpty())
                 .andExpect(jsonPath("$.data[0].canWriteReview").value(true));
     }
+
+    private void visit(User user, long spotId, LocalDate on) {
+        jdbcTemplate.update("INSERT INTO spot_visits (user_id, spot_id, verified_at) VALUES (?, ?, ?)",
+                user.getId(), spotId, java.sql.Timestamp.from(on.atTime(12, 0).atZone(clock.getZone()).toInstant()));
+    }
+
+    @Test
+    void roundsIncludeVisitsOfThatRoundOnly() throws Exception {
+        User user = onboardedUser(today().minusDays(400));
+        User other = onboardedUser(today().minusDays(400));
+        wish(user, 1, today().minusDays(400), "CLOSED");
+        visit(user, 3, today().minusDays(300)); // 1회차
+        visit(user, 8, today().minusDays(200)); // 1회차
+        visit(user, 2, today().minusDays(10)); // 2회차
+        visit(other, 5, today().minusDays(300));
+
+        mockMvc.perform(as(user, get("/api/v1/wishes/rounds")))
+                .andExpect(jsonPath("$.data[0].visits.length()").value(2))
+                .andExpect(jsonPath("$.data[0].visits[0].spotId").value(3))
+                .andExpect(jsonPath("$.data[0].visits[0].spotName").value("호미곶 해맞이광장"))
+                .andExpect(jsonPath("$.data[0].visits[0].visitedOn").value(today().minusDays(300).toString()))
+                .andExpect(jsonPath("$.data[0].visits[1].spotId").value(8))
+                .andExpect(jsonPath("$.data[1].visits.length()").value(1))
+                .andExpect(jsonPath("$.data[1].visits[0].spotId").value(2));
+    }
+
+    @Test
+    void roundsWithoutVisitsHaveEmptyList() throws Exception {
+        mockMvc.perform(as(onboardedUser(today()), get("/api/v1/wishes/rounds")))
+                .andExpect(jsonPath("$.data[0].visits.length()").value(0));
+    }
 }

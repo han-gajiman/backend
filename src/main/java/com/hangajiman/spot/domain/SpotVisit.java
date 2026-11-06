@@ -48,4 +48,12 @@ public class SpotVisit extends BaseEntity {
     public Long getId() {
         return id;
     }
+
+    public Long getSpotId() {
+        return spotId;
+    }
+
+    public Instant getVerifiedAt() {
+        return verifiedAt;
+    }
 }

@@ -184,7 +184,9 @@
 
 // GET /wishes/rounds   소원 묶음(회차) 목록. 돌탑이 있는 회차 + 현재 회차, 오래된 순
 // reviewAt: 1년 회고를 쓸 수 있는 날 (첫 돌탑 전이면 null), review: 안 썼으면 null
-[ { "round": 1, "towerCount": 12, "reviewAt": "2027-10-22", "canWriteReview": true, "review": null } ]
+// visits: 그 회차에 방문 인증한 명소, 오래된 순. 위치 정보 없이 인증한 날만
+[ { "round": 1, "towerCount": 12, "reviewAt": "2027-10-22", "canWriteReview": true, "review": null,
+    "visits": [ { "spotId": 3, "spotName": "호미곶 해맞이광장", "visitedOn": "2027-02-01" } ] } ]
 
 // POST /wishes/rounds/{round}/review   1년 회고. 끝난 회차에 돌탑이 있을 때 한 번만, 수정 불가
 { "content": "끝까지 해내는 사람이 되었어요" }   // 200자 이내
