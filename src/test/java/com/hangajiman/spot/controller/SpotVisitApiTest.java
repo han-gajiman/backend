@@ -97,7 +97,7 @@ class SpotVisitApiTest {
                 .andExpect(jsonPath("$.data[2].visited").value(true))
                 .andExpect(jsonPath("$.data[2].visitedThisTower").value(true))
                 .andExpect(jsonPath("$.data[2].radiusM").value(500))
-                .andExpect(jsonPath("$.data[2].story").value(org.hamcrest.Matchers.startsWith("한반도를 호랑이에 빗대면")));
+                .andExpect(jsonPath("$.data[2].story").value(org.hamcrest.Matchers.startsWith("한반도 호랑이 꼬리에 해당하는 땅끝")));
     }
 
     @Test
