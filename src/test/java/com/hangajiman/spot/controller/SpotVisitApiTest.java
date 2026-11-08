@@ -95,6 +95,7 @@ class SpotVisitApiTest {
 
         mockMvc.perform(as(user, get("/api/v1/spots")))
                 .andExpect(jsonPath("$.data[2].visited").value(true))
+                .andExpect(jsonPath("$.data[2].visitedThisTower").value(true))
                 .andExpect(jsonPath("$.data[2].radiusM").value(500));
     }
 

@@ -11,6 +11,7 @@ import com.hangajiman.user.domain.AgreementType;
 import com.hangajiman.user.domain.User;
 import com.hangajiman.user.domain.UserAgreement;
 import com.hangajiman.user.dto.MeResponse;
+import com.hangajiman.postcard.repository.PostcardLetterRepository;
 import com.hangajiman.user.dto.OnboardingRequest;
 import com.hangajiman.user.repository.UserAgreementRepository;
 import com.hangajiman.user.repository.UserRepository;
@@ -23,11 +24,14 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final UserAgreementRepository agreementRepository;
+    private final PostcardLetterRepository letterRepository;
     private final Clock clock;
 
-    public UserService(UserRepository userRepository, UserAgreementRepository agreementRepository, Clock clock) {
+    public UserService(UserRepository userRepository, UserAgreementRepository agreementRepository,
+                       PostcardLetterRepository letterRepository, Clock clock) {
         this.userRepository = userRepository;
         this.agreementRepository = agreementRepository;
+        this.letterRepository = letterRepository;
         this.clock = clock;
     }
 
@@ -61,7 +65,8 @@ public class UserService {
                 user.getNickname(),
                 user.getProfileImageUrl(),
                 user.getProvider(),
-                userRepository.existsOpenWish(userId)
+                userRepository.existsOpenWish(userId),
+                letterRepository.existsByReceiverIdAndReadAtIsNull(userId)
         );
     }
 
