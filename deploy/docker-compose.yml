@@ -27,6 +27,8 @@ services:
       SPRING_PROFILES_ACTIVE: demo
       DB_URL: jdbc:postgresql://db:5432/hangajiman
       DB_USERNAME: hangajiman
+      # 메모리 1GB 서버(t4g.micro)에서도 버티도록 자바 메모리 상한. 2GB 이상이면 지워도 됩니다
+      JAVA_TOOL_OPTIONS: ${JAVA_TOOL_OPTIONS:--Xmx384m -XX:MaxMetaspaceSize=160m -Xss512k}
 
   caddy:
     image: caddy:2

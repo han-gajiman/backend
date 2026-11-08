@@ -10,7 +10,7 @@ EC2 한 대에 앱, PostgreSQL, Caddy(HTTPS)를 Docker로 함께 띄웁니다. �
 ## 2. EC2 만들기
 1. EC2 → 인스턴스 시작
    - 이미지: Ubuntu Server 24.04 LTS (64비트 Arm)
-   - 유형: `t4g.small` (메모리 2GB)
+   - 유형: `t4g.small` (메모리 2GB) 권장. `t4g.micro`(1GB)도 스왑 2GB를 켜면 돌아갑니다 (앱 메모리 상한은 `docker-compose.yml`의 `JAVA_TOOL_OPTIONS`)
    - 키 페어: 새로 만들고 `.pem` 파일 보관
    - 저장공간: 20GB
 2. 보안 그룹 인바운드: `22`(SSH, 내 IP만), `80`, `443`(모두)
