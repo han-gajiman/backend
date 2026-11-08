@@ -1,6 +1,6 @@
 # API 명세서
 
-> 상태: 10/22 업데이트 초안 · Base URL: `/api/v1` · 인증: `Authorization: Bearer {accessToken}` (JWT)
+> 상태: 11/8 업데이트 (Notion과 맞춤) · Base URL: `/api/v1` · 인증: `Authorization: Bearer {accessToken}` (JWT)
 > 🔓 = 인증 불필요 · 🟡 = 팀 결정 필요 · 📄 = 페이지네이션 적용
 > 원본: Notion "API 명세서" (이 파일은 복사본이므로, 큰 변경이 있으면 원본에서 다시 내보내세요)
 
@@ -21,7 +21,7 @@
 | AUTH-04 | GET | `/users/me` | 내 정보 |
 | AUTH-04 | PUT | `/users/me/push-token` | Expo 푸시 토큰 등록 |
 | AUTH-06 | DELETE | `/users/me` | 회원 탈퇴 (즉시 삭제) |
-| WISH-02 | POST | `/ai/action-goals` | AI 실천 목표 추천 |
+| WISH-02 | POST | `/wishes/suggestions` | AI 실천 목표 + 명소 추천 🟡 미구현 |
 | WISH-03 | POST | `/wishes` | 소원 등록 (돌탑 시작) |
 | - | GET | `/wishes/current` | 진행 중 돌탑 |
 | WISH-04 | PATCH | `/wishes/{wishId}/visibility` | 공개 범위 변경 |
@@ -151,11 +151,12 @@
 ### 🌠 Wish (돌탑)
 
 ```json
-// POST /ai/action-goals  (P1)
-// 타임아웃 5초, 1인 하루 10회, LLM 실패·타임아웃 시 기본 추천 문구 반환 (fallback=true)
-{ "wish": "취업하고 싶어" }
-→ 200 { "suggestions": ["매일 영어 단어 20개 외우기", "매일 코딩 테스트 1문제 풀기", "주 3회 이력서 1곳 지원하기"],
-        "fallback": false }
+// POST /wishes/suggestions  (P1, 🟡 미구현: 앱 화면은 목 데이터로 먼저 만듦 11/7)
+// 실천 목표 3개 + 시드 10곳 중 명소 1곳. 타임아웃 5초, 1인 하루 10회(초과 429 AI_RATE_LIMIT)
+// LLM 실패·타임아웃이면 기본 실천 목표와 spot=null. 소원 글만 보내고 닉네임·회원 정보는 보내지 않음
+{ "content": "영어로 자연스럽게 대화하기" }
+→ 200 { "actionGoals": ["매일 영어 문장 3개 소리 내어 읽기", "하루 10분 영어 영상 따라 말하기", "매일 영어로 일기 한 문장 쓰기"],
+        "spot": { "spotId": 3, "spotName": "호미곶 해맞이광장", "reason": "새로운 나를 시작하는 소원이니, 해가 가장 먼저 뜨는 곳에서 다짐해 봐요." } }
 
 // POST /wishes   진행 중 돌탑 있으면 409, 등록 후 수정 API 없음. 카테고리는 명소에서 파생
 { "content": "백엔드 개발자로 취업하기", "actionGoal": "매일 영어 단어 20개 외우기",
@@ -211,7 +212,9 @@
 ```json
 // GET /spots?category=PASS 🔓   토큰이 있으면 내가 방문 인증한 명소가 visited=true (로그인 전이면 모두 false)
 [ { "id": 2, "name": "문경새재 과거길", "region": "문경", "category": "PASS",
-    "description": "경사스러운 소식을 듣는 길", "latitude": 36.7, "longitude": 128.1, "radiusM": 500, "visited": false } ]
+    "description": "경사스러운 소식을 듣는 길", "latitude": 36.7, "longitude": 128.1, "radiusM": 500, "visited": false,
+    "story": "조선 시대 영남의 선비들이 한양으로 과거를 보러 넘던 고갯길입니다. ..." } ]
+// story (SPOT-05 명소 이야기): 🟡 미구현. 원문은 DB에 저장, AI 말투 변환 방식 미정. 없으면 앱이 스토리보기를 숨김
 
 // POST /spots/{spotId}/visits   본문 없음. 앱이 기기 안에서 반경을 확인한 뒤 결과만 보냅니다 (11/5)
 // 좌표·거리·위치 동의는 서버로 보내거나 저장하지 않습니다. 서버는 진위를 검증하지 못합니다.
