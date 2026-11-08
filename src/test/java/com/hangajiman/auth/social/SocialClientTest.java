@@ -62,6 +62,44 @@ class SocialClientTest {
                 .hasMessage("소셜 로그인에 실패했어요.");
     }
 
+    // --- 웹 카카오 로그인 (인가 코드) ---
+
+    private static final String KAUTH = "https://kauth.kakao.com";
+
+    @Test
+    void kakaoAuthorizeUrlUsesRestKeyAndEncodesRedirect() {
+        String url = new KakaoWebLoginClient(restClient, KAUTH, "rest-key", "").authorizeUrl("https://han-gajiman.github.io/login", "abc");
+
+        assertThat(url).startsWith(KAUTH + "/oauth/authorize?")
+                .contains("client_id=rest-key", "response_type=code", "state=abc",
+                        "redirect_uri=https://han-gajiman.github.io/login");
+    }
+
+    @Test
+    void kakaoExchangeCodeSendsSecretWhenSet() {
+        server.expect(requestTo(KAUTH + "/oauth/token"))
+                .andExpect(method(HttpMethod.POST))
+                .andExpect(content().formDataContains(java.util.Map.of(
+                        "grant_type", "authorization_code", "client_id", "rest-key", "code", "c1",
+                        "redirect_uri", "https://x/login", "client_secret", "sec")))
+                .andRespond(withSuccess("{\"access_token\": \"kakao-token\", \"token_type\": \"bearer\"}", MediaType.APPLICATION_JSON));
+
+        String token = new KakaoWebLoginClient(restClient, KAUTH, "rest-key", "sec").exchangeCode("c1", "https://x/login");
+
+        assertThat(token).isEqualTo("kakao-token");
+        server.verify();
+    }
+
+    @Test
+    void kakaoExchangeBadCodeOrNoKeyFails() {
+        server.expect(requestTo(KAUTH + "/oauth/token")).andRespond(withStatus(HttpStatus.BAD_REQUEST));
+
+        assertThatThrownBy(() -> new KakaoWebLoginClient(restClient, KAUTH, "rest-key", "").exchangeCode("bad", "https://x/login"))
+                .isInstanceOf(BusinessException.class);
+        assertThatThrownBy(() -> new KakaoWebLoginClient(restClient, KAUTH, "", "").authorizeUrl("https://x/login", "s"))
+                .isInstanceOf(BusinessException.class);
+    }
+
     @Test
     void kakaoUnlinkWithAdminKey() {
         server.expect(requestTo(KAKAO + "/v1/user/unlink"))

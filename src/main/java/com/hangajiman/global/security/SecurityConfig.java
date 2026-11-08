@@ -19,6 +19,7 @@ public class SecurityConfig {
     private static final String[] PUBLIC_PATHS = {
             "/api/health",
             "/api/v1/auth/kakao",
+            "/api/v1/auth/kakao/web/**", // 웹 카카오 로그인 (로그인 주소, 인가 코드)
             "/api/v1/auth/google",
             "/api/v1/auth/signup/local", // 자체 회원가입 추가
             "/api/v1/auth/login/local",  // 자체 로그인 추가

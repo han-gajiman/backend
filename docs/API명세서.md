@@ -9,7 +9,9 @@
 | ID | Method | Endpoint | 설명 |
 | --- | --- | --- | --- |
 | AUTH-01 | POST | `/auth/kakao` 🔓 | 카카오 로그인/가입 |
-| AUTH-01 | POST | `/auth/google` 🔓 | Google 로그인/가입 |
+| AUTH-01 | GET | `/auth/kakao/web/authorize-url` 🔓 | 웹 카카오 로그인 화면 주소 (11/9) |
+| AUTH-01 | POST | `/auth/kakao/web/code` 🔓 | 웹 카카오 로그인/가입 (인가 코드, 11/9) |
+| AUTH-01 | POST | `/auth/google` 🔓 | Google 로그인/가입 (앱·웹 공용) |
 | AUTH-01 | POST | `/auth/signup/local` 🔓 | 자체 회원가입 (이메일·비밀번호, 11/3) |
 | AUTH-01 | POST | `/auth/login/local` 🔓 | 자체 로그인 (11/3) |
 | AUTH-01 | POST | `/auth/find-email` 🔓 | 아이디(이메일) 찾기: 닉네임 → 가린 이메일 (11/3) |
@@ -98,7 +100,12 @@
 ```json
 // POST /auth/kakao 🔓   앱의 카카오 SDK에서 받은 토큰을 서버가 검증
 { "accessToken": "카카오_액세스_토큰" }
-// POST /auth/google 🔓   앱의 Google 로그인에서 받은 ID 토큰을 서버가 검증 (10/27: Apple 대신 Google)
+// GET /auth/kakao/web/authorize-url?redirectUri=https://han-gajiman.github.io/login&state=무작위 🔓   (11/9 웹)
+// → { "url": "https://kauth.kakao.com/oauth/authorize?client_id=REST키&..." }  REST API 키는 서버 환경변수(KAKAO_REST_API_KEY)
+// POST /auth/kakao/web/code 🔓   카카오 로그인 후 redirectUri?code=...로 돌아오면 그 코드와 같은 redirectUri를 보냄
+{ "code": "카카오_인가_코드", "redirectUri": "https://han-gajiman.github.io/login" }
+// → 200 /auth/kakao와 같은 응답 (같은 카카오 계정이면 앱·웹이 같은 회원). 코드가 틀리거나 재사용이면 401 AUTH_SOCIAL_FAILED
+// POST /auth/google 🔓   Google ID 토큰을 서버가 검증 (10/27: Apple 대신 Google). 앱은 SDK, 웹은 Google 로그인 리다이렉트(id_token)로 받음
 { "idToken": "eyJhbGciOiJSUzI1NiIs..." }
 // POST /auth/signup/local 🔓   자체 회원가입. 이메일은 소문자로 저장, 비밀번호 8자 이상, 닉네임 30자 이하
 { "email": "stone@example.com", "password": "password123", "nickname": "돌쌓기" }

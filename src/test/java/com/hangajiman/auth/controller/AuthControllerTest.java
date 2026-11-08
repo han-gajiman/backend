@@ -27,6 +27,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hangajiman.auth.social.GoogleClient;
 import com.hangajiman.auth.social.KakaoClient;
+import com.hangajiman.auth.social.KakaoWebLoginClient;
 import com.hangajiman.auth.social.SocialProfile;
 import com.hangajiman.global.exception.BusinessException;
 import com.hangajiman.global.exception.ErrorCode;
@@ -62,6 +63,9 @@ class AuthControllerTest {
 
     @MockBean
     private GoogleClient googleClient;
+
+    @MockBean
+    private KakaoWebLoginClient kakaoWebLoginClient;
 
     private ResultActions postJson(String url, String body) throws Exception {
         return mockMvc.perform(post(url).contentType(MediaType.APPLICATION_JSON).content(body));
@@ -108,6 +112,39 @@ class AuthControllerTest {
 
         assertThat(data.get("isNewUser").asBoolean()).isTrue();
         assertThat(userRepository.findByProviderAndProviderUserId(SocialProvider.GOOGLE, "google-sub-1")).isPresent();
+    }
+
+    @Test
+    void webKakaoCodeLoginUsesSameKakaoAccount() throws Exception {
+        JsonNode app = kakaoLogin("777");
+        given(kakaoWebLoginClient.exchangeCode("auth-code", "https://han-gajiman.github.io/login")).willReturn("kakao-token");
+
+        JsonNode web = dataOf(postJson("/api/v1/auth/kakao/web/code",
+                "{\"code\": \"auth-code\", \"redirectUri\": \"https://han-gajiman.github.io/login\"}")
+                .andExpect(status().isOk()));
+
+        assertThat(app.get("isNewUser").asBoolean()).isTrue();
+        assertThat(web.get("isNewUser").asBoolean()).isFalse(); // 앱에서 가입한 같은 카카오 회원
+        assertThat(web.get("accessToken").asText()).isNotBlank();
+    }
+
+    @Test
+    void webKakaoBadCodeReturns401() throws Exception {
+        given(kakaoWebLoginClient.exchangeCode("bad", "https://x/login"))
+                .willThrow(new BusinessException(ErrorCode.AUTH_SOCIAL_FAILED));
+
+        postJson("/api/v1/auth/kakao/web/code", "{\"code\": \"bad\", \"redirectUri\": \"https://x/login\"}")
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.error.code").value("AUTH_SOCIAL_FAILED"));
+    }
+
+    @Test
+    void webKakaoAuthorizeUrlIsPublic() throws Exception {
+        given(kakaoWebLoginClient.authorizeUrl("https://x/login", "s1")).willReturn("https://kauth.kakao.com/oauth/authorize?x");
+
+        mockMvc.perform(get("/api/v1/auth/kakao/web/authorize-url").param("redirectUri", "https://x/login").param("state", "s1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.url").value("https://kauth.kakao.com/oauth/authorize?x"));
     }
 
     @Test
