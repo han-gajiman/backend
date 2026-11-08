@@ -1,6 +1,6 @@
 -- ============================================================
 -- 한 가지만 — ERD 수정본 (PostgreSQL)
--- 기준: 노션 ERD(10/22 02:12) + 기능명세서(10/22 08:29) + 1차 회의 결과
+-- 기준: Flyway 마이그레이션 V1~V8 (11/8 기준, 노션 ERD와 같은 내용)
 -- 🟡 = 팀 결정 필요 / [변경] = 기존 ERD 대비 바뀐 부분 / [추가] = 새로 생긴 부분
 -- 모든 테이블 created_at / updated_at (JPA Auditing, BaseEntity)
 -- users 참조 FK는 ON DELETE CASCADE → 회원 탈퇴 시 즉시 삭제
@@ -69,7 +69,7 @@ CREATE TABLE spots (
   latitude             NUMERIC(10,7) NOT NULL,
   longitude            NUMERIC(10,7) NOT NULL,
   radius_m             INT           NOT NULL DEFAULT 500, -- 인증 반경
-  background_image_url VARCHAR(500),                       -- 돌탑 배경 풍경
+  background_image_url VARCHAR(500),                       -- 돌탑 배경 풍경 (지금은 앱 안 일러스트를 써서 비어 있음)
   postcard_image_url   VARCHAR(500),                       -- 특별 디지털 엽서
   created_at           TIMESTAMPTZ   NOT NULL DEFAULT now(),
   updated_at           TIMESTAMPTZ   NOT NULL DEFAULT now()
@@ -80,9 +80,7 @@ CREATE TABLE spots (
 --         COMPLETED = 30일 경과, 회고 대기 (스케줄러가 전환)
 --         CLOSED    = 회고 완료 (result/reflection 기록됨)
 -- 🟡 중도 포기 상태는 없음 (소원 취소 불가 정책)
--- [변경] spot_visited_at 제거 → 배경은 spot_visits로 판단
---        (EXISTS spot_visits WHERE wish_id = wishes.id → 명소 풍경, 없으면 허허벌판)
---        ※ API 명세서에서 spot_visited_at을 쓰는 곳이 있는지 확인 필요
+-- [변경] spot_visited_at 제거 → 배경은 spot_visits로 판단 (그 명소를 인증했으면 명소 일러스트, 아니면 기본 화면)
 -- 🟡 소원 등록 전에 이미 방문한 명소를 고르면, 등록 시 기존 방문을 wish_id로 연결할지 결정
 CREATE TABLE wishes (
   id           BIGSERIAL PRIMARY KEY,
@@ -124,7 +122,7 @@ CREATE TABLE stones (
   CHECK (type = 'ATTENDANCE' OR content IS NOT NULL)       -- [추가] 실천 기록은 내용 필수
 );
 
--- 명소 방문 인증 (사용자 좌표는 저장하지 않음, 계산된 거리만)
+-- 명소 방문 인증 (11/5부터 좌표·거리 저장 안 함, 앱이 기기 안에서 확인한 결과와 인증 시각만)
 CREATE TABLE spot_visits (
   id          BIGSERIAL PRIMARY KEY,
   user_id     BIGINT      NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -201,8 +199,7 @@ CREATE TABLE anonymous_keepers (
 );
 CREATE INDEX idx_keepers_user ON anonymous_keepers(keeper_user_id);
 
--- [변경] 알림 (앱 내 + 푸시 발송 기록)
--- 1년 회고: 끝난 회차에 한 번 쓰고 수정 불가 (TOWER-04)
+-- [추가 11/5] 1년 회고: 끝난 회차에 한 번 쓰고 수정 불가 (TOWER-04, V8)
 CREATE TABLE year_reviews (
   id         BIGSERIAL PRIMARY KEY,
   user_id    BIGINT       NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -213,13 +210,14 @@ CREATE TABLE year_reviews (
   UNIQUE (user_id, round)
 );
 
+-- [변경] 알림 (앱 내 + 푸시 발송 기록)
 -- actor_id 추가: 보낸 사람 (CHEER, NUDGE). 시스템 알림은 NULL
 -- target_id 의미 (타입별 약속):
 --   CHEER           → cheers.id
 --   NUDGE           → wishes.id (받는 사람의 진행 중 돌탑)
 --   TOWER_COMPLETED → wishes.id
 --   POSTCARD        → postcards.id
---   YEAR_REVIEW     → wishes.round (회차 번호)
+--   YEAR_REVIEW     → 끝난 회차 번호 (wishes.round, year_reviews.round)
 -- 콕 찌르기 하루 1회: 같은 (actor_id, user_id, NUDGE)가 오늘(KST) 있는지 확인
 CREATE TABLE notifications (
   id         BIGSERIAL PRIMARY KEY,

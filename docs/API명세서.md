@@ -168,7 +168,7 @@
   "status": "ACTIVE", "visibility": "FRIENDS",
   "spot": { "id": 2, "name": "문경새재 과거길", "category": "PASS", "visited": false, "backgroundImageUrl": null },
   "stoneCount": 12, "stonedToday": false, "dayIndex": 13, "daysLeft": 17 }
-// backgroundImageUrl은 방문 여부와 관계없이 내려줌 (프론트: 미방문 = 흐리고 채도 낮게 / 방문 = 원래 색, null이면 임시 배경)
+// 배경 그림은 앱 안의 명소 일러스트를 씀 (backgroundImageUrl은 쓰지 않음). visited=false면 기본 화면
 
 // PATCH /wishes/{wishId}/visibility
 { "visibility": "PRIVATE" }   → 204
