@@ -1,0 +1,72 @@
+# EC2 배포용: PostgreSQL + 백엔드 + Caddy(HTTPS) + autoheal(멈춘 서버 자동 재시작)
+# 값은 같은 폴더의 .env에서 읽습니다. (.env.example 참고, .env는 git에 올리지 않음)
+#
+# 서버가 다운되면:
+#  - 프로세스가 죽음        → restart: unless-stopped 가 바로 다시 띄움
+#  - 살아 있는데 응답 없음  → 헬스체크 unhealthy → autoheal 이 재시작
+#  - EC2 재부팅            → docker 서비스가 켜지면서 전부 다시 올라옴
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: hangajiman
+      POSTGRES_USER: ${DB_USERNAME:-hangajiman}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD를 .env에 넣어 주세요}
+      TZ: Asia/Seoul
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d hangajiman"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build: .
+    image: hangajiman-backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file: .env
+    environment:
+      DB_URL: jdbc:postgresql://db:5432/hangajiman
+      DB_USERNAME: ${DB_USERNAME:-hangajiman}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET을 .env에 넣어 주세요 (openssl rand -base64 32)}
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-demo}
+    # 외부에는 Caddy만 열고, 서버는 EC2 안에서만 8080으로 확인할 수 있게 합니다.
+    ports:
+      - "127.0.0.1:8080:8080"
+    labels:
+      autoheal: "true"
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on: [app]
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN:-:80}
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+
+  autoheal:
+    image: willfarrell/autoheal:1.2.0
+    restart: unless-stopped
+    environment:
+      AUTOHEAL_CONTAINER_LABEL: autoheal
+      AUTOHEAL_INTERVAL: 30
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+
+volumes:
+  db-data:
+  caddy-data:

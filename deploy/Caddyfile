@@ -1,0 +1,5 @@
+# DOMAIN이 도메인이면(예: 3-35-1-2.sslip.io) Let's Encrypt 인증서를 자동으로 받아 HTTPS로 엽니다.
+# DOMAIN이 비어 있으면 :80(HTTP)으로만 엽니다.
+{$DOMAIN} {
+	reverse_proxy app:8080
+}
