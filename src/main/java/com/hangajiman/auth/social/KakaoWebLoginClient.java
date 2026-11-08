@@ -32,7 +32,7 @@ public class KakaoWebLoginClient {
     private final String clientSecret;
 
     public KakaoWebLoginClient(RestClient socialRestClient,
-                               @Value("${kakao.auth-base-url}") String authBaseUrl,
+                               @Value("${kakao.auth-base-url:https://kauth.kakao.com}") String authBaseUrl,
                                @Value("${kakao.rest-api-key:}") String restApiKey,
                                @Value("${kakao.client-secret:}") String clientSecret) {
         this.restClient = socialRestClient;
