@@ -1,0 +1,10 @@
+build
+target
+.gradle
+.idea
+.vscode
+.env
+.env.local
+deploy
+docs
+*.md
