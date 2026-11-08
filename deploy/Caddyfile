@@ -1,0 +1,4 @@
+# API_DOMAIN(예: api.hangajiman.com)으로 들어온 요청을 앱으로 넘깁니다. HTTPS 인증서는 Caddy가 자동으로 받습니다.
+{$API_DOMAIN} {
+	reverse_proxy app:8080
+}
