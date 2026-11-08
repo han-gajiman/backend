@@ -14,6 +14,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.hangajiman.ai.dto.SuggestionDtos.SuggestionRequest;
+import com.hangajiman.ai.dto.SuggestionDtos.SuggestionResponse;
+import com.hangajiman.ai.service.WishSuggestionService;
 import com.hangajiman.global.response.ApiResponse;
 import com.hangajiman.wish.dto.WishDtos.CreateWishRequest;
 import com.hangajiman.wish.dto.WishDtos.CreateWishResponse;
@@ -35,10 +38,13 @@ public class WishController {
 
     private final WishService wishService;
     private final YearReviewService yearReviewService;
+    private final WishSuggestionService wishSuggestionService;
 
-    public WishController(WishService wishService, YearReviewService yearReviewService) {
+    public WishController(WishService wishService, YearReviewService yearReviewService,
+                          WishSuggestionService wishSuggestionService) {
         this.wishService = wishService;
         this.yearReviewService = yearReviewService;
+        this.wishSuggestionService = wishSuggestionService;
     }
 
     // WISH-03 POST /wishes → 201
@@ -90,5 +96,12 @@ public class WishController {
                                                                            @Valid @RequestBody YearReviewRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.ok(yearReviewService.writeReview(userId, round, request.content())));
+    }
+
+    // WISH-02 POST /wishes/suggestions — AI 실천 목표 3개 + 명소 추천, 1인 하루 10회
+    @PostMapping("/suggestions")
+    public ApiResponse<SuggestionResponse> suggest(@AuthenticationPrincipal Long userId,
+                                                   @Valid @RequestBody SuggestionRequest request) {
+        return ApiResponse.ok(wishSuggestionService.suggest(userId, request.content()));
     }
 }
