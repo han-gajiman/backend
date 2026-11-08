@@ -33,3 +33,7 @@ HELP.md
 
 ### macOS ###
 .DS_Store
+
+# 로컬 비밀값 (Claude API 키 등). 절대 커밋하지 않음
+.env.local
+.env
