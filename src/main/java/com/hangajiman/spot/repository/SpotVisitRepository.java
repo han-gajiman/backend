@@ -9,7 +9,9 @@ import com.hangajiman.spot.domain.SpotVisit;
 
 public interface SpotVisitRepository extends JpaRepository<SpotVisit, Long> {
 
-    Optional<SpotVisit> findByUserIdAndSpotId(Long userId, Long spotId);
+    Optional<SpotVisit> findFirstByUserIdAndSpotIdAndWishId(Long userId, Long spotId, Long wishId);
+
+    Optional<SpotVisit> findFirstByUserIdAndSpotIdAndWishIdIsNull(Long userId, Long spotId);
 
     List<SpotVisit> findByUserIdOrderByVerifiedAtAsc(Long userId);
 }

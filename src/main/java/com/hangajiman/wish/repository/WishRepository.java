@@ -43,7 +43,7 @@ public interface WishRepository extends JpaRepository<Wish, Long> {
 
     // 여러 돌탑 중 그 회원이 돌탑의 명소를 방문 인증한 돌탑 id (돌탑 전후 언제 인증했든 상관없음)
     @Query(value = """
-            SELECT w.id FROM wishes w
+            SELECT DISTINCT w.id FROM wishes w
               JOIN spot_visits v ON v.user_id = w.user_id AND v.spot_id = w.spot_id
              WHERE w.id IN (:wishIds)
             """, nativeQuery = true)

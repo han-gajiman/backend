@@ -10,6 +10,7 @@ public record MeResponse(
         String nickname,
         String profileImageUrl,
         SocialProvider provider,
-        boolean hasActiveWish
+        boolean hasActiveWish,
+        boolean hasUnreadLetter // 안 읽은 받은 엽서 (메인 우체통 깃발)
 ) {
 }

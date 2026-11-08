@@ -9,15 +9,19 @@ import org.springframework.transaction.annotation.Transactional;
 import com.hangajiman.spot.domain.Spot;
 import com.hangajiman.spot.dto.SpotResponse;
 import com.hangajiman.spot.repository.SpotRepository;
+import com.hangajiman.wish.domain.Wish;
+import com.hangajiman.wish.repository.WishRepository;
 
 @Service
 @Transactional(readOnly = true)
 public class SpotService {
 
     private final SpotRepository spotRepository;
+    private final WishRepository wishRepository;
 
-    public SpotService(SpotRepository spotRepository) {
+    public SpotService(SpotRepository spotRepository, WishRepository wishRepository) {
         this.spotRepository = spotRepository;
+        this.wishRepository = wishRepository;
     }
 
     // SPOT-01 명소 목록. category가 없으면 전체. 로그인 전(userId null)이면 visited는 모두 false
@@ -26,6 +30,10 @@ public class SpotService {
                 ? spotRepository.findAllByOrderByIdAsc()
                 : spotRepository.findAllByCategoryOrderByIdAsc(category);
         Set<Long> visited = userId == null ? Set.of() : Set.copyOf(spotRepository.findVisitedSpotIds(userId));
-        return spots.stream().map(spot -> SpotResponse.from(spot, visited.contains(spot.getId()))).toList();
+        Set<Long> visitedThisTower = userId == null ? Set.of() : Set.copyOf(spotRepository.findSpotIdsVisitedInTower(userId,
+                wishRepository.findFirstByUserIdAndStatusIn(userId, WishRepository.OPEN_STATUSES).map(Wish::getId).orElse(null)));
+        return spots.stream()
+                .map(spot -> SpotResponse.from(spot, visited.contains(spot.getId()), visitedThisTower.contains(spot.getId())))
+                .toList();
     }
 }

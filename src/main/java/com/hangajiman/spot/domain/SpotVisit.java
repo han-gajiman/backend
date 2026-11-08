@@ -12,7 +12,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
 /**
- * 명소 방문 인증 (ERD spot_visits). 회원당 명소 하나에 한 건입니다.
+ * 명소 방문 인증 (ERD spot_visits). 같은 명소는 돌탑(진행 중 소원)마다 한 건입니다 (V9).
  * 위치는 앱이 기기 안에서 확인하고 서버로 보내지 않으므로 좌표·거리는 없습니다.
  */
 @Entity
@@ -30,7 +30,7 @@ public class SpotVisit extends BaseEntity {
     private Long spotId;
 
     @Column(name = "wish_id")
-    private Long wishId; // 인증할 때 진행 중이던 돌탑의 명소면 연결
+    private Long wishId; // 인증할 때 진행 중이던 돌탑 (없으면 null)
 
     @Column(name = "verified_at", nullable = false)
     private Instant verifiedAt;
