@@ -96,7 +96,8 @@ class SpotVisitApiTest {
         mockMvc.perform(as(user, get("/api/v1/spots")))
                 .andExpect(jsonPath("$.data[2].visited").value(true))
                 .andExpect(jsonPath("$.data[2].visitedThisTower").value(true))
-                .andExpect(jsonPath("$.data[2].radiusM").value(500));
+                .andExpect(jsonPath("$.data[2].radiusM").value(500))
+                .andExpect(jsonPath("$.data[2].story").value(org.hamcrest.Matchers.startsWith("한반도를 호랑이에 빗대면")));
     }
 
     @Test

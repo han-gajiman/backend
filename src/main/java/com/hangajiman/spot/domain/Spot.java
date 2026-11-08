@@ -35,6 +35,9 @@ public class Spot extends BaseEntity {
     @Column(length = 300)
     private String description;
 
+    @Column(length = 500)
+    private String story; // SPOT-05 명소 이야기 (없으면 앱이 스토리보기를 숨김)
+
     @Column(nullable = false, precision = 10, scale = 7)
     private BigDecimal latitude;
 
@@ -71,6 +74,10 @@ public class Spot extends BaseEntity {
 
     public String getDescription() {
         return description;
+    }
+
+    public String getStory() {
+        return story;
     }
 
     public BigDecimal getLatitude() {

@@ -66,6 +66,7 @@ CREATE TABLE spots (
   region               VARCHAR(30)   NOT NULL,
   category             VARCHAR(20)   NOT NULL,             -- 🟡 카테고리 기준 (명소 1개가 여러 카테고리면 spot_categories 다대다로 분리)
   description          VARCHAR(300),
+  story                VARCHAR(500),                       -- [추가 11/8] SPOT-05 명소 이야기 (V10)
   latitude             NUMERIC(10,7) NOT NULL,
   longitude            NUMERIC(10,7) NOT NULL,
   radius_m             INT           NOT NULL DEFAULT 500, -- 인증 반경

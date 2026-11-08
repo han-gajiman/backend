@@ -11,6 +11,7 @@ public record SpotResponse(
         String region,
         String category,
         String description,
+        String story, // SPOT-05 명소 이야기. 없으면 null
         double latitude,
         double longitude,
         int radiusM, // 방문 인증 반경. 앱이 기기 안에서 거리를 계산할 때 씁니다.
@@ -25,6 +26,7 @@ public record SpotResponse(
                 spot.getRegion(),
                 spot.getCategory(),
                 spot.getDescription(),
+                spot.getStory(),
                 spot.getLatitude().doubleValue(),
                 spot.getLongitude().doubleValue(),
                 spot.getRadiusM(),
