@@ -21,7 +21,7 @@
 | AUTH-04 | GET | `/users/me` | 내 정보 |
 | AUTH-04 | PUT | `/users/me/push-token` | Expo 푸시 토큰 등록 |
 | AUTH-06 | DELETE | `/users/me` | 회원 탈퇴 (즉시 삭제) |
-| WISH-02 | POST | `/wishes/suggestions` | AI 실천 목표 + 명소 추천 🟡 미구현 |
+| WISH-02 | POST | `/wishes/suggestions` | AI 실천 목표 + 명소 추천 (Claude, 하루 10회) |
 | WISH-03 | POST | `/wishes` | 소원 등록 (돌탑 시작) |
 | - | GET | `/wishes/current` | 진행 중 돌탑 |
 | WISH-04 | PATCH | `/wishes/{wishId}/visibility` | 공개 범위 변경 |
@@ -151,12 +151,15 @@
 ### 🌠 Wish (돌탑)
 
 ```json
-// POST /wishes/suggestions  (P1, 🟡 미구현: 앱 화면은 목 데이터로 먼저 만듦 11/7)
-// 실천 목표 3개 + 시드 10곳 중 명소 1곳. 타임아웃 5초, 1인 하루 10회(초과 429 AI_RATE_LIMIT)
-// LLM 실패·타임아웃이면 기본 실천 목표와 spot=null. 소원 글만 보내고 닉네임·회원 정보는 보내지 않음
+// POST /wishes/suggestions  (P1, 11/8 구현. Claude API, 모델은 ANTHROPIC_MODEL 기본 claude-haiku-5-5)
+// 실천 목표 3개 + 시드 10곳 중 명소 1곳. 타임아웃 5초, 1인 하루 10회 KST(초과 429 AI_RATE_LIMIT)
+// AI 실패·시간 초과·키 없음·형식이 맞지 않으면 기본 실천 목표 3개, spot=null, fallback=true
+// 위험한 소원(자해 등)이면 actionGoals=[], supportMessage에 상담 전화 안내
+// 소원 글만 보내고 닉네임·회원 정보는 보내지 않음. 호출 기록(ai_suggestion_logs)에는 시각만 저장
 { "content": "영어로 자연스럽게 대화하기" }
 → 200 { "actionGoals": ["매일 영어 문장 3개 소리 내어 읽기", "하루 10분 영어 영상 따라 말하기", "매일 영어로 일기 한 문장 쓰기"],
-        "spot": { "spotId": 3, "spotName": "호미곶 해맞이광장", "reason": "새로운 나를 시작하는 소원이니, 해가 가장 먼저 뜨는 곳에서 다짐해 봐요." } }
+        "spot": { "spotId": 3, "spotName": "호미곶 해맞이광장", "reason": "새로운 나를 시작하는 소원이니, 해가 가장 먼저 뜨는 곳에서 다짐해 봐요." },
+        "fallback": false, "supportMessage": null }
 
 // POST /wishes   진행 중 돌탑 있으면 409, 등록 후 수정 API 없음. 카테고리는 명소에서 파생
 { "content": "백엔드 개발자로 취업하기", "actionGoal": "매일 영어 단어 20개 외우기",
