@@ -20,6 +20,13 @@ public final class AuthDtos {
     }
 
     // POST /auth/google — 앱의 Google 로그인에서 받은 ID 토큰
+    // 웹 카카오 로그인: 카카오 로그인 화면에서 돌아올 때 받은 인가 코드와, 그때 쓴 돌아올 주소
+    public record KakaoCodeLoginRequest(@NotBlank String code, @NotBlank @Size(max = 300) String redirectUri) {
+    }
+
+    public record KakaoAuthorizeUrlResponse(String url) {
+    }
+
     public record GoogleLoginRequest(@NotBlank String idToken) {
     }
 
