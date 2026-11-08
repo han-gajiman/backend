@@ -46,4 +46,4 @@ cd ~/backend && git pull && cd deploy && docker compose up -d --build app
 - **DB 마이그레이션:** 앱이 시작할 때 Flyway가 자동으로 적용합니다.
 - **시간 이동:** `demo` 프로필이라 `POST /api/v1/demo/time-travel`이 켜져 있습니다. 서버 시계가 모든 회원에게 함께 바뀝니다.
 - **메일:** `SPRING_MAIL_*`가 비어 있으면 비밀번호 찾기 코드가 메일 대신 로그에만 찍힙니다.
-- **CORS:** 기본으로 `https://han-gajiman.expo.app`과 미리보기 주소(`https://han-gajiman--*.expo.app`)를 허용합니다.
+- **CORS:** 기본으로 `https://han-gajiman.github.io`(실서비스 웹), `https://han-gajiman.expo.app`과 미리보기 주소(`https://han-gajiman--*.expo.app`)를 허용합니다.
