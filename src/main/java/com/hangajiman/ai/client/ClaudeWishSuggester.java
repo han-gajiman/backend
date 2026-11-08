@@ -2,6 +2,7 @@ package com.hangajiman.ai.client;
 
 import java.time.Duration;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -30,6 +31,7 @@ public class ClaudeWishSuggester implements WishSuggester {
 
     private static final Logger log = LoggerFactory.getLogger(ClaudeWishSuggester.class);
     private static final Duration TIMEOUT = Duration.ofSeconds(5);
+    private static final Map<String, String> CATEGORY_NAMES = Map.of("PASS", "합격", "EARNEST", "간절함", "NEW_START", "새 출발");
 
     private static final String SYSTEM = """
             당신은 '한 가지만' 앱의 도우미입니다. 사용자는 소원 하나를 정하고 30일 동안 매일 작은 실천을 하며 돌을 쌓습니다.
@@ -39,7 +41,9 @@ public class ClaudeWishSuggester implements WishSuggester {
             1. actionGoals: 이 소원을 위해 매일 할 수 있는 구체적인 실천 목표 3개. 각각 한국어 한 문장, 30자 이내,
                "매일 영어 단어 20개 외우기"처럼 숫자나 시간이 들어간 바로 할 수 있는 행동. 서로 다른 방법으로.
             2. spotId: 아래 경북 명소 목록 중 이 소원과 가장 어울리는 곳의 id 하나 (목록에 있는 id만).
-            3. reason: 그 명소를 고른 이유. 한국어 한 문장, 50자 이내, 다정한 말투("~해 봐요").
+               명소마다 성격이 다릅니다. [합격] 시험·취업·도전, [간절함] 오래 품은 바람·건강·가족, [새 출발] 새로운 시작·습관·변화.
+               소원의 성격과 명소 설명을 함께 보고 고르고, 특정 명소에만 몰리지 않게 소원마다 가장 잘 맞는 곳을 고르세요.
+            3. reason: 그 명소를 고른 이유. 명소 이야기와 소원을 잇는 한국어 한 문장, 40자 이내, 다정한 말투("~해 봐요").
             4. sensitive: 소원이 자해·자살·타인에게 해를 끼치는 내용이면 true, 아니면 false.
                true일 때 actionGoals는 빈 배열, spotId는 0, reason은 빈 문자열.
 
@@ -75,7 +79,8 @@ public class ClaudeWishSuggester implements WishSuggester {
             return Optional.empty();
         }
         String spotList = spots.stream()
-                .map(s -> "- id " + s.getId() + ": " + s.getName() + " (" + s.getDescription() + ")")
+                .map(s -> "- id " + s.getId() + ": " + s.getName() + " [" + CATEGORY_NAMES.getOrDefault(s.getCategory(), s.getCategory())
+                        + "] " + s.getDescription())
                 .collect(Collectors.joining("\n"));
         StructuredMessageCreateParams<Output> params = MessageCreateParams.builder()
                 .model(model)
