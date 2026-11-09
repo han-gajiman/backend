@@ -36,12 +36,19 @@ docker compose logs -f app               # "Started HangajimanApplication"이 �
 
 확인: 브라우저에서 `https://도메인/api/v1/spots`가 명소 목록 JSON을 보여주면 됩니다.
 
-## 4. 업데이트
+## 4. 시연 계정 기록 채우기
+`demo@hangajiman.app`(시연)과 `friend@hangajiman.app`(친구)을 회원가입·온보딩·친구 맺기까지 해 둔 뒤 실행합니다.
+지난 돌탑 14개, 진행 중 돌탑(13일째), 방문·엽서, 캘린더, 응원을 오늘 기준으로 만들고, 다시 실행하면 새로 만듭니다.
+```bash
+cd ~/backend/deploy && docker compose exec -T db psql -U hangajiman -d hangajiman < seed-demo.sql
+```
+
+## 5. 업데이트
 ```bash
 cd ~/backend && git pull && cd deploy && docker compose up -d --build app
 ```
 
-## 5. 알아 둘 점
+## 6. 알아 둘 점
 - **DB:** 데이터는 Docker 볼륨 `db-data`에 남습니다. `docker compose down -v`는 데이터를 지우니 쓰지 마세요.
 - **DB 마이그레이션:** 앱이 시작할 때 Flyway가 자동으로 적용합니다.
 - **시간 이동:** `demo` 프로필이라 `POST /api/v1/demo/time-travel`이 켜져 있습니다. 서버 시계가 모든 회원에게 함께 바뀝니다.
