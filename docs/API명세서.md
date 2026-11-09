@@ -24,6 +24,16 @@
 | AUTH-04 | PUT | `/users/me/push-token` | Expo 푸시 토큰 등록 |
 | AUTH-06 | DELETE | `/users/me` | 회원 탈퇴 (즉시 삭제) |
 | WISH-02 | POST | `/wishes/suggestions` | AI 실천 목표 + 명소 추천 (Claude, 하루 10회) |
+| PLAN-01 | GET | `/plans/calendar?month=YYYY-MM` | 소원 캘린더 (그 달과 겹치는 돌탑·소원 메모·할 일, month 생략 시 이번 달) |
+| PLAN-01 | GET | `/plans/wish-plans` | 소원 메모 목록 (시작 예정일 순) |
+| PLAN-01 | POST | `/plans/wish-plans` | 소원 메모 `{content, startDate}` → 201. 진행 중 돌탑 기간 400 PLAN_WISH_IN_TOWER, 다른 메모와 겹침 400 PLAN_WISH_OVERLAP, 12개 초과 400 PLAN_WISH_LIMIT |
+| PLAN-01 | DELETE | `/plans/wish-plans/{id}` | 소원 메모 삭제 → 204 (남의 것 404 PLAN_WISH_NOT_FOUND) |
+| PLAN-02 | GET | `/plans/todos/today` | 오늘 할 일 (돌 쌓기 화면) |
+| PLAN-02 | POST | `/plans/todos` | 할 일 `{date, content}` → 201. 지난 날짜 400 PLAN_PAST_DATE, 하루 5개 초과 400 PLAN_TODO_LIMIT |
+| PLAN-02 | PATCH | `/plans/todos/{id}` | `{done}` → 204 (지난 날짜 400, 남의 것 404 PLAN_TODO_NOT_FOUND) |
+| PLAN-02 | DELETE | `/plans/todos/{id}` | → 204 |
+| PLAN-03 | POST | `/plans/todos/suggestion` | `{date}` → `{content, remaining, fallback}`. 진행 중 돌탑 기간만(400 PLAN_SUGGEST_OUT_OF_TOWER), 하루 10번(429 AI_RATE_LIMIT, 소원 추천과 따로) |
+| STONE-01 | POST | `/wishes/{id}/stones` 추가 항목 | `doneTodoIds: number[]` (선택) 기록에 넣은 오늘 할 일을 완료로. 내 것·오늘 것만 반영 (11/9) |
 | WISH-03 | POST | `/wishes` | 소원 등록 (돌탑 시작) |
 | - | GET | `/wishes/current` | 진행 중 돌탑 |
 | WISH-04 | PATCH | `/wishes/{wishId}/visibility` | 공개 범위 변경 |

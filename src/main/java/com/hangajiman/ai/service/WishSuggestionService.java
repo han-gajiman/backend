@@ -46,7 +46,7 @@ public class WishSuggestionService {
             자살예방상담전화 109, 정신건강위기상담 1577-0199에서 24시간 이야기를 들어 드려요.""";
 
     // AI 호출 전에 먼저 걸러내는 위기 표현 (AI도 sensitive로 한 번 더 판단)
-    private static final List<String> CRISIS_WORDS = List.of("죽고 싶", "죽고싶", "자살", "자해", "극단적 선택", "사라지고 싶", "살기 싫");
+    public static final List<String> CRISIS_WORDS = List.of("죽고 싶", "죽고싶", "자살", "자해", "극단적 선택", "사라지고 싶", "살기 싫");
 
     private final WishSuggester suggester;
     private final AiSuggestionLogRepository logRepository;
@@ -64,10 +64,10 @@ public class WishSuggestionService {
     @Transactional
     public SuggestionResponse suggest(Long userId, String content) {
         Instant todayStart = LocalDate.now(clock).atStartOfDay(clock.getZone()).toInstant();
-        if (logRepository.countByUserIdAndCreatedAtGreaterThanEqual(userId, todayStart) >= DAILY_LIMIT) {
+        if (logRepository.countByUserIdAndKindAndCreatedAtGreaterThanEqual(userId, AiSuggestionLog.WISH, todayStart) >= DAILY_LIMIT) {
             throw new BusinessException(ErrorCode.AI_RATE_LIMIT);
         }
-        logRepository.save(new AiSuggestionLog(userId));
+        logRepository.save(new AiSuggestionLog(userId, AiSuggestionLog.WISH));
 
         String wish = content.trim();
         if (CRISIS_WORDS.stream().anyMatch(wish::contains)) {

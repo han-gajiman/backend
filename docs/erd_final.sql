@@ -241,7 +241,31 @@ CREATE INDEX idx_noti_nudge ON notifications(actor_id, user_id, created_at DESC)
 CREATE TABLE ai_suggestion_logs (
   id         BIGSERIAL PRIMARY KEY,
   user_id    BIGINT      NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  kind       VARCHAR(20) NOT NULL DEFAULT 'WISH' CHECK (kind IN ('WISH','TODO')),  -- [추가 11/9] 소원 추천·할 일 추천을 하루 10회씩 따로 (V12)
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
-CREATE INDEX idx_ai_logs_user_day ON ai_suggestion_logs(user_id, created_at);
+CREATE INDEX idx_ai_logs_user_kind_day ON ai_suggestion_logs(user_id, kind, created_at);
+
+-- [추가 11/9] PLAN-02 소원 캘린더 날짜별 할 일 (V12). 하루 5개, 지난 날짜는 바꿀 수 없음(서비스)
+CREATE TABLE plan_todos (
+  id         BIGSERIAL PRIMARY KEY,
+  user_id    BIGINT      NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  todo_date  DATE        NOT NULL,
+  content    VARCHAR(40) NOT NULL,
+  done       BOOLEAN     NOT NULL DEFAULT false,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX idx_plan_todos_user_date ON plan_todos(user_id, todo_date);
+
+-- [추가 11/9] PLAN-01 앞으로 할 소원 메모 (V12). 시작 예정일부터 30일, 1인 12개, 진행 중 돌탑·다른 메모와 겹치지 않게(서비스)
+CREATE TABLE wish_plans (
+  id         BIGSERIAL PRIMARY KEY,
+  user_id    BIGINT       NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  content    VARCHAR(100) NOT NULL,
+  start_date DATE         NOT NULL,
+  created_at TIMESTAMPTZ  NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ  NOT NULL DEFAULT now()
+);
+CREATE INDEX idx_wish_plans_user ON wish_plans(user_id, start_date);
