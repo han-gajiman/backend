@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -111,7 +112,16 @@ public class PostcardService {
     // GET /postcards/letters/received 받은 엽서 (최신순)
     @Transactional(readOnly = true)
     public PageResponse<LetterResponse> getReceived(Long userId, int page, int size) {
-        var letters = letterRepository.findByReceiverId(userId, PageResponse.pageable(page, size, LATEST_FIRST));
+        return toLetterPage(userId, letterRepository.findByReceiverId(userId, PageResponse.pageable(page, size, LATEST_FIRST)));
+    }
+
+    // GET /postcards/letters/sent 내가 보낸 엽서 (나에게 보낸 것 포함, 최신순)
+    @Transactional(readOnly = true)
+    public PageResponse<LetterResponse> getSent(Long userId, int page, int size) {
+        return toLetterPage(userId, letterRepository.findBySenderId(userId, PageResponse.pageable(page, size, LATEST_FIRST)));
+    }
+
+    private PageResponse<LetterResponse> toLetterPage(Long userId, Slice<PostcardLetter> letters) {
         List<PostcardLetter> content = letters.getContent();
         Map<Long, String> names = spotNames(content.stream().map(PostcardLetter::getSpotId).distinct().toList());
         Map<Long, String> nicknames = nicknames(content.stream()

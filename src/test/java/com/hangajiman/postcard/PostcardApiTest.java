@@ -126,6 +126,17 @@ class PostcardApiTest extends FriendApiTestSupport {
         // 보내도 내 엽서는 그대로
         mockMvc.perform(as(me, get("/api/v1/postcards"))).andExpect(jsonPath("$.data.length()").value(1));
 
+        // 보낸 엽서: 내 보낸함에만 있고, 받은 친구의 보낸함에는 없음
+        mockMvc.perform(as(me, get("/api/v1/postcards/letters/sent")))
+                .andExpect(jsonPath("$.data.content.length()").value(1))
+                .andExpect(jsonPath("$.data.content[0].toNickname").value("지기"))
+                .andExpect(jsonPath("$.data.content[0].fromMe").value(true))
+                .andExpect(jsonPath("$.data.content[0].message").value("호미곶에서 안부 전해"));
+        mockMvc.perform(as(friend, get("/api/v1/postcards/letters/sent")))
+                .andExpect(jsonPath("$.data.content.length()").value(0));
+        mockMvc.perform(as(me, get("/api/v1/postcards/letters/received")))
+                .andExpect(jsonPath("$.data.content.length()").value(0));
+
         Integer letterId = JsonPath.read(received, "$.data.content[0].letterId");
         mockMvc.perform(as(me, patch("/api/v1/postcards/letters/{id}/read", letterId)))
                 .andExpect(status().isNotFound())

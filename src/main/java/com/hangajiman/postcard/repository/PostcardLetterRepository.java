@@ -12,6 +12,8 @@ public interface PostcardLetterRepository extends JpaRepository<PostcardLetter, 
 
     Slice<PostcardLetter> findByReceiverId(Long receiverId, Pageable pageable);
 
+    Slice<PostcardLetter> findBySenderId(Long senderId, Pageable pageable);
+
     Optional<PostcardLetter> findByIdAndReceiverId(Long id, Long receiverId);
 
     // 우체통 깃발: 안 읽은 받은 엽서가 있는지

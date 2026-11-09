@@ -35,6 +35,10 @@
 | SPOT-01 | GET | `/spots` 🔓 | 명소 목록 (category 필터) |
 | SPOT-03 | POST | `/spots/{spotId}/visits` | 방문 인증 결과 저장 → 배경 해금 (위치 정보 없음) |
 | SPOT-04 | GET | `/postcards` | 엽서 보관함 📄 |
+| SPOT-04 | POST | `/postcards/letters` | 엽서 보내기 (친구 또는 나에게, 100자, 보낸 글은 수정 불가) |
+| SPOT-04 | GET | `/postcards/letters/received` | 받은 엽서 📄 최신순 |
+| SPOT-04 | GET | `/postcards/letters/sent` | 보낸 엽서 📄 최신순, 나에게 보낸 것 포함 (11/9) |
+| SPOT-04 | PATCH | `/postcards/letters/{id}/read` | 받은 엽서 읽음 → 204 |
 | FRIEND-01 | POST | `/friends/invites` | 초대 링크 생성 |
 | FRIEND-01 | POST | `/friends/invites/{inviteCode}/accept` | 초대 수락 |
 | FRIEND-02 | GET | `/friends` | 친구 목록 + 돌탑 요약 📄 |
