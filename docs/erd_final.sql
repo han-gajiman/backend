@@ -1,6 +1,6 @@
 -- ============================================================
 -- 한 가지만 — ERD 수정본 (PostgreSQL)
--- 기준: Flyway 마이그레이션 V1~V8 (11/8 기준, 노션 ERD와 같은 내용)
+-- 기준: Flyway 마이그레이션 V1~V12 (11/9 기준, 노션 ERD와 같은 내용)
 -- 🟡 = 팀 결정 필요 / [변경] = 기존 ERD 대비 바뀐 부분 / [추가] = 새로 생긴 부분
 -- 모든 테이블 created_at / updated_at (JPA Auditing, BaseEntity)
 -- users 참조 FK는 ON DELETE CASCADE → 회원 탈퇴 시 즉시 삭제
@@ -133,21 +133,39 @@ CREATE TABLE spot_visits (
   created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
-ALTER TABLE spot_visits ADD CONSTRAINT uq_spot_visits_user_spot UNIQUE (user_id, spot_id);  -- [변경 11/5] 회원당 명소 하나, 좌표·거리 컬럼 없음 (V7)
+-- [변경 11/8] 같은 명소는 돌탑(진행 중 소원)마다 한 번 인증 (V9). 11/5부터 좌표·거리 컬럼 없음 (V7)
+CREATE UNIQUE INDEX uq_spot_visits_tower ON spot_visits(user_id, spot_id, wish_id) WHERE wish_id IS NOT NULL;
+CREATE UNIQUE INDEX uq_spot_visits_no_tower ON spot_visits(user_id, spot_id) WHERE wish_id IS NULL;
 CREATE INDEX idx_spot_visits_wish ON spot_visits(wish_id);
 
--- 디지털 엽서 보관함
+-- 디지털 엽서 보관함 (SPOT-04). [변경 11/8] 명소마다 4종(style), 인증할 때마다 아직 없는 1장 무작위 (V9)
 CREATE TABLE postcards (
   id         BIGSERIAL PRIMARY KEY,
   user_id    BIGINT      NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   spot_id    BIGINT      NOT NULL REFERENCES spots(id),
   visit_id   BIGINT      NOT NULL REFERENCES spot_visits(id) ON DELETE CASCADE,
+  style      SMALLINT    NOT NULL CHECK (style BETWEEN 1 AND 4),  -- [추가 11/8] 엽서 디자인 (V9)
   issued_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  UNIQUE (user_id, spot_id)                                -- 명소당 1장
+  CONSTRAINT uq_postcards_user_spot_style UNIQUE (user_id, spot_id, style)  -- [변경 11/8] 명소당 스타일별 1장
 );
 CREATE INDEX idx_postcards_visit ON postcards(visit_id);
+
+-- [추가 11/8] 엽서 보내기 (V9). 가진 엽서 뒷면에 글을 써서 친구 또는 나에게(receiver = 나). 보낸 글은 수정 불가
+CREATE TABLE postcard_letters (
+  id          BIGSERIAL PRIMARY KEY,
+  sender_id   BIGINT       NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  receiver_id BIGINT       NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  spot_id     BIGINT       NOT NULL REFERENCES spots(id),
+  style       SMALLINT     NOT NULL CHECK (style BETWEEN 1 AND 4),
+  message     VARCHAR(100) NOT NULL,
+  read_at     TIMESTAMPTZ,                                   -- 받은 사람이 읽은 시각 (우체통 깃발·안 읽음 점)
+  created_at  TIMESTAMPTZ  NOT NULL DEFAULT now(),
+  updated_at  TIMESTAMPTZ  NOT NULL DEFAULT now()
+);
+CREATE INDEX idx_postcard_letters_receiver ON postcard_letters(receiver_id, created_at DESC);
+CREATE INDEX idx_postcard_letters_sender ON postcard_letters(sender_id);
 
 -- 친구 초대 (https 링크 코드)
 -- 🟡 링크 1개를 7일간 여러 명이 쓸 수 있음. 유출 대비가 필요하면 max_uses 추가 검토
@@ -217,7 +235,7 @@ CREATE TABLE year_reviews (
 --   CHEER           → cheers.id
 --   NUDGE           → wishes.id (받는 사람의 진행 중 돌탑)
 --   TOWER_COMPLETED → wishes.id
---   POSTCARD        → postcards.id
+--   POSTCARD        → postcard_letters.id (받은 엽서)
 --   YEAR_REVIEW     → 끝난 회차 번호 (wishes.round, year_reviews.round)
 -- 콕 찌르기 하루 1회: 같은 (actor_id, user_id, NUDGE)가 오늘(KST) 있는지 확인
 CREATE TABLE notifications (
