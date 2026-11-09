@@ -55,6 +55,14 @@ public class PostcardController {
         return ApiResponse.ok(postcardService.getReceived(userId, page, size));
     }
 
+    // SPOT-04 GET /postcards/letters/sent?page=0&size=20 📄 내가 보낸 엽서, 최신순 (나에게 보낸 것 포함)
+    @GetMapping("/letters/sent")
+    public ApiResponse<PageResponse<LetterResponse>> getSent(@AuthenticationPrincipal Long userId,
+                                                             @RequestParam(defaultValue = "0") int page,
+                                                             @RequestParam(defaultValue = "" + PageResponse.DEFAULT_SIZE) int size) {
+        return ApiResponse.ok(postcardService.getSent(userId, page, size));
+    }
+
     // SPOT-04 PATCH /postcards/letters/{id}/read → 204
     @PatchMapping("/letters/{letterId}/read")
     public ResponseEntity<Void> markRead(@AuthenticationPrincipal Long userId, @PathVariable Long letterId) {
