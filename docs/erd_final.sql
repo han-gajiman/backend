@@ -1,6 +1,6 @@
 -- ============================================================
 -- 한 가지만 — ERD 수정본 (PostgreSQL)
--- 기준: Flyway 마이그레이션 V1~V12 (11/9 기준, 노션 ERD와 같은 내용)
+-- 기준: Flyway 마이그레이션 V1~V13 (11/9 기준, 노션 ERD와 같은 내용)
 -- 🟡 = 팀 결정 필요 / [변경] = 기존 ERD 대비 바뀐 부분 / [추가] = 새로 생긴 부분
 -- 모든 테이블 created_at / updated_at (JPA Auditing, BaseEntity)
 -- users 참조 FK는 ON DELETE CASCADE → 회원 탈퇴 시 즉시 삭제
@@ -13,7 +13,7 @@ CREATE TABLE users (
   provider_user_id   VARCHAR(100) NOT NULL,                -- 소셜 회원 고유 ID (LOCAL은 이메일)
   email              VARCHAR(255),                         -- [추가 11/3] 자체 로그인 이메일(소문자), 소셜 회원은 NULL. 부분 유니크 uq_users_email (V5)
   password           VARCHAR(255),                         -- [추가 11/3] BCrypt 해시, 소셜 회원은 NULL (V5)
-  nickname           VARCHAR(30),                          -- 온보딩에서 설정
+  nickname           VARCHAR(30),                          -- 온보딩에서 설정. [변경 11/9] 회원끼리 겹치지 않음 uq_users_nickname (V13)
   profile_image_url  VARCHAR(500),
   push_token         VARCHAR(200),                         -- Expo push token (기기 1개 기준)
   onboarded_at       TIMESTAMPTZ,                          -- NULL이면 온보딩 미완료
@@ -22,6 +22,7 @@ CREATE TABLE users (
   updated_at         TIMESTAMPTZ  NOT NULL DEFAULT now(),
   UNIQUE (provider, provider_user_id)
 );
+CREATE UNIQUE INDEX uq_users_nickname ON users(nickname) WHERE nickname IS NOT NULL;  -- [추가 11/9] V13
 
 -- [추가 11/3] 비밀번호 찾기 인증코드 (V6). 코드 원문 대신 BCrypt 해시, 10분 만료, 5번 틀리면 무효, 회원당 1개
 CREATE TABLE password_reset_codes (

@@ -14,6 +14,7 @@ import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -100,7 +101,17 @@ public class AuthService {
             throw new BusinessException(ErrorCode.AUTH_EMAIL_DUPLICATED);
         }
 
-        User user = userRepository.save(User.createLocal(email, passwordEncoder.encode(request.password()), request.nickname()));
+        String nickname = request.nickname().trim();
+        if (userRepository.existsByNickname(nickname)) {
+            throw new BusinessException(ErrorCode.NICKNAME_DUPLICATED);
+        }
+        User user;
+        try {
+            user = userRepository.saveAndFlush(User.createLocal(email, passwordEncoder.encode(request.password()), nickname));
+        } catch (DataIntegrityViolationException e) {
+            // 거의 동시에 같은 이메일·닉네임으로 가입한 경우
+            throw new BusinessException(userRepository.existsByEmail(email) ? ErrorCode.AUTH_EMAIL_DUPLICATED : ErrorCode.NICKNAME_DUPLICATED);
+        }
         TokenResponse tokens = issueTokens(user.getId());
         return new LoginResponse(tokens.accessToken(), tokens.refreshToken(), true, user.isOnboarded());
     }

@@ -4,6 +4,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.hangajiman.auth.service.AuthService;
 import com.hangajiman.global.response.ApiResponse;
 import com.hangajiman.user.dto.MeResponse;
+import com.hangajiman.user.dto.NicknameRequest;
 import com.hangajiman.user.dto.OnboardingRequest;
 import com.hangajiman.user.dto.PushTokenRequest;
 import com.hangajiman.user.service.UserService;
@@ -53,6 +55,14 @@ public class UserController {
     }
 
     // AUTH-04 PUT /users/me/push-token → 204
+    // AUTH-04 PATCH /users/me/nickname → 204, 겹치면 409 NICKNAME_DUPLICATED
+    @PatchMapping("/nickname")
+    public ResponseEntity<Void> changeNickname(@AuthenticationPrincipal Long userId,
+                                               @Valid @RequestBody NicknameRequest request) {
+        userService.changeNickname(userId, request.nickname());
+        return ResponseEntity.noContent().build();
+    }
+
     @PutMapping("/push-token")
     public ResponseEntity<Void> updatePushToken(@AuthenticationPrincipal Long userId,
                                                 @Valid @RequestBody PushTokenRequest request) {

@@ -71,7 +71,8 @@ class ReflectionAndCollectionTest {
 
     private User onboardedUser(LocalDate journeyStartedOn) {
         User user = User.create(SocialProvider.KAKAO, "kakao-" + System.nanoTime(), null);
-        user.completeOnboarding("소원지기", clock.instant());
+        user.completeOnboarding("소원지기" + System.nanoTime() % 1_000_000, // 닉네임은 회원끼리 겹치면 안 됨
+                clock.instant());
         user.startJourneyIfFirst(journeyStartedOn);
         return userRepository.saveAndFlush(user);
     }
@@ -280,7 +281,8 @@ class ReflectionAndCollectionTest {
     @Test
     void newUserHasOnlyFirstRound() throws Exception {
         User user = User.create(SocialProvider.KAKAO, "kakao-" + System.nanoTime(), null);
-        user.completeOnboarding("소원지기", clock.instant());
+        user.completeOnboarding("소원지기" + System.nanoTime() % 1_000_000, // 닉네임은 회원끼리 겹치면 안 됨
+                clock.instant());
         userRepository.saveAndFlush(user);
 
         mockMvc.perform(as(user, get("/api/v1/wishes/rounds")))

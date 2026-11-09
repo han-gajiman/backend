@@ -69,7 +69,8 @@ class StoneControllerTest {
 
     private User onboardedUser() {
         User user = User.create(SocialProvider.KAKAO, "kakao-" + System.nanoTime(), null);
-        user.completeOnboarding("소원지기", clock.instant());
+        user.completeOnboarding("소원지기" + System.nanoTime() % 1_000_000, // 닉네임은 회원끼리 겹치면 안 됨
+                clock.instant());
         return userRepository.saveAndFlush(user);
     }
 

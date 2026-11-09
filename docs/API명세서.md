@@ -21,6 +21,7 @@
 | AUTH-03 | POST | `/auth/logout` | 로그아웃 |
 | AUTH-02 | POST | `/users/me/onboarding` | 온보딩 (약관 동의 + 닉네임) |
 | AUTH-04 | GET | `/users/me` | 내 정보 |
+| AUTH-04 | PATCH | `/users/me/nickname` | 닉네임 변경 `{nickname}` 1~30자 → 204. 회원끼리 겹치면 409 NICKNAME_DUPLICATED (11/9) |
 | AUTH-04 | PUT | `/users/me/push-token` | Expo 푸시 토큰 등록 |
 | AUTH-06 | DELETE | `/users/me` | 회원 탈퇴 (즉시 삭제) |
 | WISH-02 | POST | `/wishes/suggestions` | AI 실천 목표 + 명소 추천 (Claude, 하루 10회) |
@@ -80,6 +81,7 @@
 401 AUTH_SOCIAL_FAILED         카카오/Google 토큰 검증 실패
 401 AUTH_LOGIN_FAILED          자체 로그인 실패 (없는 이메일·틀린 비밀번호 구분 없이)
 409 AUTH_EMAIL_DUPLICATED      이미 가입된 이메일
+409 NICKNAME_DUPLICATED        다른 회원이 쓰는 닉네임 (회원가입·온보딩·닉네임 변경, 11/9)
 400 AUTH_RESET_CODE_INVALID    비밀번호 찾기 인증코드가 틀림/만료/5회 초과 (없는 이메일도 같은 에러)
 429 TOO_MANY_REQUESTS          계정 찾기 API를 짧은 시간에 너무 많이 호출 (IP·이메일 기준)
 403 ONBOARDING_REQUIRED        온보딩 미완료
