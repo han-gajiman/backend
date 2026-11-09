@@ -131,19 +131,35 @@ public class YearReviewService {
         LocalDate today = LocalDate.now(clock);
         int sent = 0;
         for (User user : userRepository.findByJourneyStartedOnLessThanEqual(today.minusDays(User.DAYS_PER_ROUND))) {
-            int finishedRound = (int) (ChronoUnit.DAYS.between(user.getJourneyStartedOn(), today) / User.DAYS_PER_ROUND);
-            if (!hasTower(user.getId(), finishedRound)
-                    || notificationService.hasNotified(user.getId(), NotificationType.YEAR_REVIEW, (long) finishedRound)) {
-                continue;
+            if (notifyIfDue(user, today)) {
+                sent++;
             }
-            notificationService.notify(user.getId(), null, NotificationType.YEAR_REVIEW, (long) finishedRound,
-                    "1년이 지났어요. 그동안 쌓은 돌탑을 돌아봐요");
-            sent++;
         }
         if (sent > 0) {
             log.info("1년 회고 알림: {}명 (기준일 {})", sent, today);
         }
         return sent;
+    }
+
+    // 계정별 시연 시간 이동 (DEMO-01): 그 회원만, 그 회원의 날짜 기준
+    @Transactional
+    public boolean notifyDueFor(Long userId) {
+        User user = userRepository.findById(userId).orElse(null);
+        LocalDate today = LocalDate.now(clock);
+        return user != null && user.getJourneyStartedOn() != null
+                && !user.getJourneyStartedOn().isAfter(today.minusDays(User.DAYS_PER_ROUND))
+                && notifyIfDue(user, today);
+    }
+
+    private boolean notifyIfDue(User user, LocalDate today) {
+        int finishedRound = (int) (ChronoUnit.DAYS.between(user.getJourneyStartedOn(), today) / User.DAYS_PER_ROUND);
+        if (!hasTower(user.getId(), finishedRound)
+                || notificationService.hasNotified(user.getId(), NotificationType.YEAR_REVIEW, (long) finishedRound)) {
+            return false;
+        }
+        notificationService.notify(user.getId(), null, NotificationType.YEAR_REVIEW, (long) finishedRound,
+                "1년이 지났어요. 그동안 쌓은 돌탑을 돌아봐요");
+        return true;
     }
 
     private boolean hasTower(Long userId, int round) {

@@ -17,6 +17,7 @@ public enum ErrorCode {
     // 자체 로그인: 없는 이메일과 틀린 비밀번호를 같은 에러로 답해 가입 여부가 드러나지 않게 합니다.
     AUTH_LOGIN_FAILED(HttpStatus.UNAUTHORIZED, "이메일 또는 비밀번호가 맞지 않아요."),
     AUTH_EMAIL_DUPLICATED(HttpStatus.CONFLICT, "이미 가입된 이메일이에요."),
+    DEMO_NOT_ALLOWED(HttpStatus.FORBIDDEN, "시연용 시간 이동은 시연 계정만 쓸 수 있어요."),
     NICKNAME_DUPLICATED(HttpStatus.CONFLICT, "이미 쓰는 닉네임이에요. 다른 닉네임을 적어 주세요."),
     AUTH_RESET_CODE_INVALID(HttpStatus.BAD_REQUEST, "인증코드가 맞지 않거나 만료됐어요."),
     TOO_MANY_REQUESTS(HttpStatus.TOO_MANY_REQUESTS, "요청이 너무 많아요. 잠시 후 다시 시도해 주세요."),

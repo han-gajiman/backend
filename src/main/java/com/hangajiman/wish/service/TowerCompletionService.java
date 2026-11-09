@@ -42,6 +42,19 @@ public class TowerCompletionService {
         completeExpired();
     }
 
+    // 계정별 시연 시간 이동 (DEMO-01): 그 회원의 돌탑만, 그 회원의 날짜(요청에 묶인 시계) 기준으로 완성 처리
+    @Transactional
+    public int completeExpiredFor(Long userId) {
+        LocalDate today = LocalDate.now(clock);
+        List<Wish> expired = wishRepository.findByUserIdAndStatusAndEndDateBefore(userId, WishStatus.ACTIVE, today);
+        for (Wish wish : expired) {
+            wish.complete();
+            notificationService.notify(wish.getUserId(), null, NotificationType.TOWER_COMPLETED, wish.getId(),
+                    COMPLETED_MESSAGE);
+        }
+        return expired.size();
+    }
+
     // 완성 처리한 돌탑 수
     @Transactional
     public int completeExpired() {

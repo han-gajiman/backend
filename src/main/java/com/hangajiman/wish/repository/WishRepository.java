@@ -71,4 +71,7 @@ public interface WishRepository extends JpaRepository<Wish, Long> {
     @Query("UPDATE Wish w SET w.status = com.hangajiman.wish.domain.WishStatus.COMPLETED "
             + "WHERE w.status = com.hangajiman.wish.domain.WishStatus.ACTIVE AND w.endDate < :today")
     int completeExpired(@Param("today") LocalDate today);
+
+    // 계정별 시연 시간 이동 (DEMO-01): 그 회원의 돌탑만
+    List<Wish> findByUserIdAndStatusAndEndDateBefore(Long userId, WishStatus status, LocalDate date);
 }
