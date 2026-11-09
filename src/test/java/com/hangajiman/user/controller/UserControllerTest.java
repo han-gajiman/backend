@@ -2,6 +2,7 @@ package com.hangajiman.user.controller;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -59,13 +60,54 @@ class UserControllerTest {
 
     private User onboardedUser() {
         User user = newUser();
-        user.completeOnboarding("소원지기", clock.instant());
+        user.completeOnboarding("소원지기" + System.nanoTime() % 1_000_000, // 닉네임은 회원끼리 겹치면 안 됨
+                clock.instant());
         return userRepository.saveAndFlush(user);
     }
 
     private MockHttpServletRequestBuilder as(User user, MockHttpServletRequestBuilder request) {
         return request.header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtProvider.createAccessToken(user.getId()))
                 .contentType(MediaType.APPLICATION_JSON);
+    }
+
+    private User onboardedUser(String nickname) {
+        User user = newUser();
+        user.completeOnboarding(nickname, clock.instant());
+        return userRepository.saveAndFlush(user);
+    }
+
+    @Test
+    void changeNicknameMustBeUnique() throws Exception {
+        User me = onboardedUser("돌쌓기");
+        onboardedUser("지기");
+
+        mockMvc.perform(as(me, patch("/api/v1/users/me/nickname")).content("{\"nickname\": \" 지기 \"}"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.error.code").value("NICKNAME_DUPLICATED"));
+        mockMvc.perform(as(me, patch("/api/v1/users/me/nickname")).content("{\"nickname\": \"돌쌓기\"}"))
+                .andExpect(status().isNoContent()); // 지금 내 닉네임 그대로는 괜찮음
+        mockMvc.perform(as(me, patch("/api/v1/users/me/nickname")).content("{\"nickname\": \" 새 이름 \"}"))
+                .andExpect(status().isNoContent());
+        mockMvc.perform(as(me, get("/api/v1/users/me"))).andExpect(jsonPath("$.data.nickname").value("새 이름"));
+
+        mockMvc.perform(as(me, patch("/api/v1/users/me/nickname")).content("{\"nickname\": \"   \"}"))
+                .andExpect(status().isBadRequest());
+        mockMvc.perform(as(me, patch("/api/v1/users/me/nickname")).content("{\"nickname\": \"" + "가".repeat(31) + "\"}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void onboardingAndSignupRejectTakenNickname() throws Exception {
+        onboardedUser("지기");
+        User fresh = newUser();
+        mockMvc.perform(as(fresh, post("/api/v1/users/me/onboarding")).content(ONBOARDING_BODY.replace("소원지기", "지기")))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.error.code").value("NICKNAME_DUPLICATED"));
+
+        mockMvc.perform(post("/api/v1/auth/signup/local").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\": \"nick@example.com\", \"password\": \"password123\", \"nickname\": \"지기\"}"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.error.code").value("NICKNAME_DUPLICATED"));
     }
 
     @Test

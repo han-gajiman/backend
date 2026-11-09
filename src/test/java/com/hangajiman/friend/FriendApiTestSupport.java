@@ -55,10 +55,11 @@ public abstract class FriendApiTestSupport {
     @Autowired
     protected Clock clock;
 
-    // 온보딩을 마친 회원
+    // 온보딩을 마친 회원. 닉네임은 회원끼리 겹치면 안 돼서, 같은 테스트에서 이미 쓴 이름이면 뒤에 번호를 붙입니다
     protected User user(String nickname) {
         User user = User.create(SocialProvider.KAKAO, "kakao-" + System.nanoTime(), null);
-        user.completeOnboarding(nickname, clock.instant());
+        String unique = userRepository.existsByNickname(nickname) ? nickname + System.nanoTime() % 1_000_000 : nickname;
+        user.completeOnboarding(unique, clock.instant());
         return userRepository.saveAndFlush(user);
     }
 

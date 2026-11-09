@@ -2,6 +2,7 @@ package com.hangajiman.user.service;
 
 import java.time.Clock;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -54,7 +55,34 @@ public class UserService {
         agreementRepository.save(new UserAgreement(userId, AgreementType.TERMS, version, true));
         agreementRepository.save(new UserAgreement(userId, AgreementType.PRIVACY, version, true));
 
-        user.completeOnboarding(request.nickname().trim(), clock.instant());
+        String nickname = requireAvailableNickname(request.nickname(), userId);
+        user.completeOnboarding(nickname, clock.instant());
+        flushNickname();
+    }
+
+    // AUTH-04 PATCH /users/me/nickname — 회원끼리 겹치면 409 NICKNAME_DUPLICATED
+    @Transactional
+    public void changeNickname(Long userId, String requested) {
+        User user = getUser(userId);
+        user.changeNickname(requireAvailableNickname(requested, userId));
+        flushNickname();
+    }
+
+    private String requireAvailableNickname(String requested, Long userId) {
+        String nickname = requested.trim();
+        if (userRepository.existsByNicknameAndIdNot(nickname, userId)) {
+            throw new BusinessException(ErrorCode.NICKNAME_DUPLICATED);
+        }
+        return nickname;
+    }
+
+    // 거의 동시에 같은 닉네임을 정한 경우 DB 유니크 인덱스(uq_users_nickname)에서 걸림
+    private void flushNickname() {
+        try {
+            userRepository.flush();
+        } catch (DataIntegrityViolationException e) {
+            throw new BusinessException(ErrorCode.NICKNAME_DUPLICATED);
+        }
     }
 
     // AUTH-04 내 정보

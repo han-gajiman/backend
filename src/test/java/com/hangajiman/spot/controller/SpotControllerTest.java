@@ -88,7 +88,8 @@ class SpotControllerTest {
 
     private User onboardedUser(String providerUserId) {
         User user = User.create(SocialProvider.KAKAO, providerUserId, null);
-        user.completeOnboarding("소원지기", Instant.now());
+        user.completeOnboarding("소원지기" + System.nanoTime() % 1_000_000, // 닉네임은 회원끼리 겹치면 안 됨
+                Instant.now());
         return userRepository.saveAndFlush(user);
     }
 

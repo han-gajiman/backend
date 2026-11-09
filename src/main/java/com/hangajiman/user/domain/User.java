@@ -96,6 +96,11 @@ public class User extends BaseEntity {
     }
 
     // AUTH-02 온보딩 완료. now는 주입된 Clock 기준 시각을 넘기세요.
+    // AUTH-04 닉네임 변경 (중복 확인은 서비스에서)
+    public void changeNickname(String nickname) {
+        this.nickname = nickname;
+    }
+
     public void completeOnboarding(String nickname, Instant now) {
         this.nickname = nickname;
         this.onboardedAt = now;

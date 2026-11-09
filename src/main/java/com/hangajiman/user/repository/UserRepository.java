@@ -26,6 +26,11 @@ public interface UserRepository extends JpaRepository<User, Long> {
     // 아이디 찾기: 닉네임으로 가입한 이메일 회원
     List<User> findByProviderAndNicknameOrderByIdAsc(SocialProvider provider, String nickname);
 
+    // AUTH-04 닉네임 중복 확인 (본인 제외)
+    boolean existsByNicknameAndIdNot(String nickname, Long id);
+
+    boolean existsByNickname(String nickname);
+
     // TOWER-04: 첫 돌탑 시작일이 date 이전인 회원 (1년 회고 알림 대상 후보)
     List<User> findByJourneyStartedOnLessThanEqual(LocalDate date);
 
