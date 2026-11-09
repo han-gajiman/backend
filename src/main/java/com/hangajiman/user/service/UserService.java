@@ -6,6 +6,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.hangajiman.demo.TimeTravelPolicy;
 import com.hangajiman.global.exception.BusinessException;
 import com.hangajiman.global.exception.ErrorCode;
 import com.hangajiman.user.domain.AgreementType;
@@ -27,13 +28,15 @@ public class UserService {
     private final UserAgreementRepository agreementRepository;
     private final PostcardLetterRepository letterRepository;
     private final Clock clock;
+    private final TimeTravelPolicy timeTravelPolicy;
 
     public UserService(UserRepository userRepository, UserAgreementRepository agreementRepository,
-                       PostcardLetterRepository letterRepository, Clock clock) {
+                       PostcardLetterRepository letterRepository, Clock clock, TimeTravelPolicy timeTravelPolicy) {
         this.userRepository = userRepository;
         this.agreementRepository = agreementRepository;
         this.letterRepository = letterRepository;
         this.clock = clock;
+        this.timeTravelPolicy = timeTravelPolicy;
     }
 
     // 토큰의 userId로 회원 조회. 탈퇴 등으로 없으면 401
@@ -94,7 +97,8 @@ public class UserService {
                 user.getProfileImageUrl(),
                 user.getProvider(),
                 userRepository.existsOpenWish(userId),
-                letterRepository.existsByReceiverIdAndReadAtIsNull(userId)
+                letterRepository.existsByReceiverIdAndReadAtIsNull(userId),
+                timeTravelPolicy.canTravel(user)
         );
     }
 

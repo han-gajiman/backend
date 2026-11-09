@@ -118,6 +118,11 @@ public class Wish extends BaseEntity {
 
     // TOWER-02 완성 회고 → CLOSED. 상태 확인은 서비스에서 합니다.
     // WISH-04 공개 범위는 등록 후에도 바꿀 수 있습니다. (소원·실천 목표와 달리)
+    // 30일이 지나 회고 대기 (평소에는 스케줄러가 일괄 UPDATE, 계정별 시연 시간 이동 때만 이 메서드)
+    public void complete() {
+        this.status = WishStatus.COMPLETED;
+    }
+
     public void changeVisibility(Visibility visibility) {
         this.visibility = visibility;
     }

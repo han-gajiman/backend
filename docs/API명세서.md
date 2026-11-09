@@ -21,7 +21,8 @@
 | AUTH-03 | POST | `/auth/logout` | 로그아웃 |
 | AUTH-02 | POST | `/users/me/onboarding` | 온보딩 (약관 동의 + 닉네임) |
 | AUTH-04 | GET | `/users/me` | 내 정보 |
-| AUTH-04 | PATCH | `/users/me/nickname` | 닉네임 변경 `{nickname}` 1~30자 → 204. 회원끼리 겹치면 409 NICKNAME_DUPLICATED (11/9) |
+| AUTH-04 | PATCH | `/users/me/nickname` | 닉네임 변경 `{nickname}` 1~30자 → 204. 회원끼리 겹치면 403 DEMO_NOT_ALLOWED           시연 계정이 아닌데 시간 이동 (실서버, 11/9)
+409 NICKNAME_DUPLICATED (11/9) |
 | AUTH-04 | PUT | `/users/me/push-token` | Expo 푸시 토큰 등록 |
 | AUTH-06 | DELETE | `/users/me` | 회원 탈퇴 (즉시 삭제) |
 | WISH-02 | POST | `/wishes/suggestions` | AI 실천 목표 + 명소 추천 (Claude, 하루 10회) |
@@ -57,7 +58,8 @@
 | FRIEND-04 | POST | `/friends/{friendId}/nudge` | 콕 찌르기 |
 | FRIEND-05 | POST | `/wishes/{wishId}/anonymous-keeper` | 익명 소원지기 매칭 🟡 |
 | NOTI-01 | GET / PATCH | `/notifications`, `/notifications/{id}/read` | 알림 목록 📄 / 읽음 |
-| DEMO-01 | POST | `/demo/time-travel` | 시간 이동 (시연 전용) |
+| DEMO-01 | POST | `/demo/time-travel` | 시간 이동 (시연 전용). 실서버는 허용한 시연 계정만 자기 날짜를 이동, 다른 계정 403 DEMO_NOT_ALLOWED (11/9) |
+| DEMO-01 | POST | `/demo/time-travel/reset` | 실제 날짜로 되돌리기 (실서버는 그 시연 계정만, 11/9) |
 
 > DEMO-02(위치 인증 우회)는 앱에서 처리하므로 엔드포인트가 없습니다.
 

@@ -9,6 +9,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import com.hangajiman.global.config.DemoClock;
+
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -25,9 +27,11 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     private static final String BEARER = "Bearer ";
 
     private final JwtProvider jwtProvider;
+    private final DemoClock clock;
 
-    public JwtAuthFilter(JwtProvider jwtProvider) {
+    public JwtAuthFilter(JwtProvider jwtProvider, DemoClock clock) {
         this.jwtProvider = jwtProvider;
+        this.clock = clock;
     }
 
     @Override
@@ -39,8 +43,13 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             if (userId != null) {
                 var auth = new UsernamePasswordAuthenticationToken(userId, null, List.of());
                 SecurityContextHolder.getContext().setAuthentication(auth);
+                clock.bindUser(userId); // 계정별 시연 시간 이동 (DEMO-01)
             }
         }
-        chain.doFilter(request, response);
+        try {
+            chain.doFilter(request, response);
+        } finally {
+            clock.unbindUser();
+        }
     }
 }
