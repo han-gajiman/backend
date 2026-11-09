@@ -8,5 +8,5 @@ import com.hangajiman.ai.domain.AiSuggestionLog;
 
 public interface AiSuggestionLogRepository extends JpaRepository<AiSuggestionLog, Long> {
 
-    long countByUserIdAndCreatedAtGreaterThanEqual(Long userId, Instant from);
+    long countByUserIdAndKindAndCreatedAtGreaterThanEqual(Long userId, String kind, Instant from);
 }

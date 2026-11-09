@@ -22,6 +22,11 @@ public interface WishRepository extends JpaRepository<Wish, Long> {
 
     boolean existsByUserIdAndStatusIn(Long userId, Collection<WishStatus> statuses);
 
+    // PLAN-01 캘린더: 기간이 [from, to]와 겹치는 내 돌탑 (to 이전에 시작하고 from 이후에 끝남)
+    List<Wish> findByUserIdAndStartDateLessThanEqualAndEndDateGreaterThanEqualOrderByStartDateAsc(Long userId,
+                                                                                                LocalDate to,
+                                                                                                LocalDate from);
+
     // TOWER-03 회차별 완성 돌탑 (COMPLETED·CLOSED), 시작일 순
     List<Wish> findByUserIdAndRoundAndStatusInOrderByStartDateAsc(Long userId, int round,
                                                                     Collection<WishStatus> statuses);

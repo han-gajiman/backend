@@ -17,6 +17,7 @@ import com.hangajiman.global.response.PageResponse;
 import com.hangajiman.stone.dto.StoneDtos.CreateStoneRequest;
 import com.hangajiman.stone.dto.StoneDtos.CreateStoneResponse;
 import com.hangajiman.stone.dto.StoneDtos.StoneItem;
+import com.hangajiman.plan.service.PlanService;
 import com.hangajiman.stone.service.StoneService;
 
 @RestController
@@ -25,8 +26,11 @@ public class StoneController {
 
     private final StoneService stoneService;
 
-    public StoneController(StoneService stoneService) {
+    private final PlanService planService;
+
+    public StoneController(StoneService stoneService, PlanService planService) {
         this.stoneService = stoneService;
+        this.planService = planService;
     }
 
     // STONE-01 POST /wishes/{wishId}/stones → 201. 본문을 생략하거나 content가 없으면 출석
@@ -36,8 +40,9 @@ public class StoneController {
             @PathVariable Long wishId,
             @Validated @RequestBody(required = false) CreateStoneRequest request) {
         String content = request == null ? null : request.content();
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.ok(stoneService.stack(userId, wishId, content)));
+        CreateStoneResponse response = stoneService.stack(userId, wishId, content);
+        planService.markDoneToday(userId, request == null ? null : request.doneTodoIds());
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok(response));
     }
 
     // STONE-01 GET /wishes/{wishId}/stones?page=0&size=20 📄 최신순

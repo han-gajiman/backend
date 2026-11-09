@@ -44,7 +44,15 @@ public enum ErrorCode {
     NUDGE_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "지금은 콕 찌를 수 없는 친구예요."),
     NUDGE_LIMIT(HttpStatus.TOO_MANY_REQUESTS, "오늘은 이미 콕 찔렀어요."),
     NOTIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "알림을 찾을 수 없어요."),
-    AI_RATE_LIMIT(HttpStatus.TOO_MANY_REQUESTS, "오늘 AI 추천 횟수를 모두 사용했어요.");
+    AI_RATE_LIMIT(HttpStatus.TOO_MANY_REQUESTS, "오늘 AI 추천 횟수를 모두 사용했어요."),
+    PLAN_PAST_DATE(HttpStatus.BAD_REQUEST, "지난 날짜는 바꿀 수 없어요."),
+    PLAN_TODO_LIMIT(HttpStatus.BAD_REQUEST, "하루에 5개까지 적을 수 있어요."),
+    PLAN_TODO_NOT_FOUND(HttpStatus.NOT_FOUND, "할 일을 찾을 수 없어요."),
+    PLAN_WISH_LIMIT(HttpStatus.BAD_REQUEST, "소원 메모는 12개까지 적을 수 있어요."),
+    PLAN_WISH_IN_TOWER(HttpStatus.BAD_REQUEST, "진행 중인 돌탑이 끝난 뒤 날짜에만 적을 수 있어요."),
+    PLAN_WISH_OVERLAP(HttpStatus.BAD_REQUEST, "다른 소원 메모의 30일과 겹쳐요."),
+    PLAN_WISH_NOT_FOUND(HttpStatus.NOT_FOUND, "소원 메모를 찾을 수 없어요."),
+    PLAN_SUGGEST_OUT_OF_TOWER(HttpStatus.BAD_REQUEST, "진행 중인 돌탑 기간에만 추천받을 수 있어요.");
 
     private final HttpStatus status;
     private final String message;
