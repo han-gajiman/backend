@@ -11,7 +11,7 @@
 ## 기술 스택
 
 - Java 17 · Spring Boot 3.3.5 · Gradle
-- Spring Data JPA · PostgreSQL 16 · Flyway (마이그레이션 V1~V13)
+- Spring Data JPA · PostgreSQL 16 · Flyway (마이그레이션 V1~V14)
 - Spring Security + JWT (Access/Refresh Token, 재발급할 때마다 교체)
 - Claude API (`com.anthropic:anthropic-java`, 기본 모델 `claude-haiku-5-5`)
 - 배포: AWS EC2 + Docker Compose + Caddy(HTTPS 자동 인증서)
@@ -138,6 +138,7 @@ DB 마이그레이션은 앱이 켜질 때 Flyway가 자동으로 적용합니�
 | V10, V11 | 명소 이야기 |
 | V12 | 소원 캘린더(`plan_todos`, `wish_plans`), AI 호출 기록 종류(`kind`) |
 | V13 | 닉네임 중복 금지 (`uq_users_nickname`) |
+| V14 | 카카오·Google 프로필 사진 URL을 저장하지 않음 (기존 값 삭제) |
 
 - 이미 적용된 파일은 **수정하지 말고** 새 버전 파일을 추가합니다. ERD 문서(`docs/erd_final.sql`)도 같이 고칩니다.
 - JPA는 `ddl-auto=validate`라 엔티티와 테이블이 다르면 앱이 켜지지 않습니다.

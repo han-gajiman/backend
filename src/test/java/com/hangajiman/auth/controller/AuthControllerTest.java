@@ -76,7 +76,7 @@ class AuthControllerTest {
     }
 
     private JsonNode kakaoLogin(String kakaoUserId) throws Exception {
-        given(kakaoClient.getProfile("kakao-token")).willReturn(new SocialProfile(kakaoUserId, "https://img"));
+        given(kakaoClient.getProfile("kakao-token")).willReturn(new SocialProfile(kakaoUserId));
         return dataOf(postJson("/api/v1/auth/kakao", "{\"accessToken\": \"kakao-token\"}").andExpect(status().isOk()));
     }
 
@@ -96,7 +96,7 @@ class AuthControllerTest {
         assertThat(second.get("isNewUser").asBoolean()).isFalse();
 
         var user = userRepository.findByProviderAndProviderUserId(SocialProvider.KAKAO, "12345").orElseThrow();
-        assertThat(user.getProfileImageUrl()).isEqualTo("https://img");
+        assertThat(user.getProfileImageUrl()).isNull(); // 프로필 사진 URL은 저장하지 않음 (11/10)
         // 원문은 저장하지 않고 해시만
         Integer rawSaved = jdbcTemplate.queryForObject("SELECT count(*) FROM refresh_tokens WHERE token_hash = ?",
                 Integer.class, first.get("refreshToken").asText());
@@ -105,7 +105,7 @@ class AuthControllerTest {
 
     @Test
     void googleLogin() throws Exception {
-        given(googleClient.verifyIdToken("google-id-token")).willReturn(new SocialProfile("google-sub-1", null));
+        given(googleClient.verifyIdToken("google-id-token")).willReturn(new SocialProfile("google-sub-1"));
 
         JsonNode data = dataOf(postJson("/api/v1/auth/google", "{\"idToken\": \"google-id-token\"}")
                 .andExpect(status().isOk()));
@@ -231,7 +231,7 @@ class AuthControllerTest {
 
     @Test
     void googleWithdrawDoesNotCallKakao() throws Exception {
-        given(googleClient.verifyIdToken("g")).willReturn(new SocialProfile("google-withdraw", null));
+        given(googleClient.verifyIdToken("g")).willReturn(new SocialProfile("google-withdraw"));
         JsonNode login = dataOf(postJson("/api/v1/auth/google", "{\"idToken\": \"g\"}"));
 
         mockMvc.perform(delete("/api/v1/users/me")

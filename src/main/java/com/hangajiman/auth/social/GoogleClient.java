@@ -66,6 +66,6 @@ public class GoogleClient {
             log.info("Google 토큰의 aud/iss/sub가 맞지 않습니다.");
             throw new BusinessException(ErrorCode.AUTH_SOCIAL_FAILED);
         }
-        return new SocialProfile(body.get("sub").asText(), body.path("picture").asText(null));
+        return new SocialProfile(body.get("sub").asText()); // 계정 고유 ID만 (프로필 사진·이메일은 쓰지 않음)
     }
 }
