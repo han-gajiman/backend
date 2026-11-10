@@ -44,7 +44,8 @@ class WishSuggestionApiTest extends FriendApiTestSupport {
                 .andExpect(jsonPath("$.data.spot.spotId").value(3))
                 .andExpect(jsonPath("$.data.spot.spotName").value("호미곶 해맞이광장"))
                 .andExpect(jsonPath("$.data.fallback").value(false))
-                .andExpect(jsonPath("$.data.supportMessage").isEmpty());
+                .andExpect(jsonPath("$.data.supportMessage").isEmpty())
+                .andExpect(jsonPath("$.data.remaining").value(9));
     }
 
     @Test
@@ -91,7 +92,9 @@ class WishSuggestionApiTest extends FriendApiTestSupport {
         answer(null);
         User user = user("소원지기");
         for (int i = 0; i < 10; i++) {
-            mockMvc.perform(as(user, post("/api/v1/wishes/suggestions")).content(BODY)).andExpect(status().isOk());
+            mockMvc.perform(as(user, post("/api/v1/wishes/suggestions")).content(BODY))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.data.remaining").value(9 - i)); // 기본 문구로 대체돼도 1번으로 셈
         }
         mockMvc.perform(as(user, post("/api/v1/wishes/suggestions")).content(BODY))
                 .andExpect(status().isTooManyRequests())
