@@ -84,6 +84,9 @@ class DemoScenarioResetTest {
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.error.code").value("DEMO_NOT_ALLOWED"));
 
+        // 시연 중 생긴 알림 (콕 찌르기 등)
+        jdbcTemplate.update("INSERT INTO notifications (user_id, actor_id, type, target_id, message) VALUES (?, ?, 'NUDGE', 1, '콕')",
+                friend.getId(), demo.getId());
         clock.travelUser(demo.getId(), Duration.ofDays(30));
         mockMvc.perform(as(demo, post("/api/v1/demo/reset-scenario"))).andExpect(status().isNoContent());
         mockMvc.perform(as(demo, post("/api/v1/demo/reset-scenario"))).andExpect(status().isNoContent()); // 여러 번 눌러도 같은 상태
@@ -94,6 +97,8 @@ class DemoScenarioResetTest {
         assertThat(count("SELECT COUNT(*) FROM wishes WHERE user_id = ? AND status = 'ACTIVE'", friend.getId())).isEqualTo(1);
         assertThat(count("SELECT COUNT(*) FROM postcards WHERE user_id = ?", demo.getId())).isEqualTo(14);
         assertThat(count("SELECT COUNT(*) FROM year_reviews WHERE user_id = ?", demo.getId())).isEqualTo(1);
+        assertThat(count("SELECT COUNT(*) FROM notifications WHERE user_id = ?", friend.getId())).isZero();
+        assertThat(count("SELECT COUNT(*) FROM notifications WHERE user_id = ?", demo.getId())).isEqualTo(1); // 돌돌이의 안 읽은 엽서
         mockMvc.perform(as(demo, get("/api/v1/wishes/current")))
                 .andExpect(jsonPath("$.data.stoneCount").value(12))
                 .andExpect(jsonPath("$.data.dayIndex").value(13))
