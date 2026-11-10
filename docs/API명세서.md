@@ -160,7 +160,9 @@
 
 // GET /users/me
 { "id": 1, "nickname": "석현", "profileImageUrl": "https://...", "provider": "KAKAO",
-  "hasActiveWish": true }
+  "hasActiveWish": true, "hasUnreadLetter": false, "canTimeTravel": false, "canResetDemo": false,
+  "stats": { "towerCount": 18, "visitedSpotCount": 5, "postcardCount": 14 } }
+// stats (11/10): 완성한 돌탑(30일이 끝난 것, 모아보기 기준) · 방문 인증한 명소 수 · 모은 엽서 수
 
 // PUT /users/me/push-token
 { "pushToken": "ExponentPushToken[xxxx]" }   → 204

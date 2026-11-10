@@ -92,6 +92,7 @@ public class UserService {
     // AUTH-04 내 정보
     public MeResponse getMe(Long userId) {
         User user = getUser(userId);
+        UserRepository.MyStats stats = userRepository.findMyStats(userId);
         return new MeResponse(
                 user.getId(),
                 user.getNickname(),
@@ -100,7 +101,8 @@ public class UserService {
                 userRepository.existsOpenWish(userId),
                 letterRepository.existsByReceiverIdAndReadAtIsNull(userId),
                 timeTravelPolicy.canTravel(user),
-                timeTravelPolicy.canTravel(user) && DemoScenarioService.DEMO_EMAIL.equalsIgnoreCase(user.getEmail())
+                timeTravelPolicy.canTravel(user) && DemoScenarioService.DEMO_EMAIL.equalsIgnoreCase(user.getEmail()),
+                new MeResponse.Stats(stats.getTowerCount(), stats.getVisitedSpotCount(), stats.getPostcardCount())
         );
     }
 

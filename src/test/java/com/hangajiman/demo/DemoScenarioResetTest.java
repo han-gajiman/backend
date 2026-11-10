@@ -107,5 +107,11 @@ class DemoScenarioResetTest {
                 .andExpect(jsonPath("$.data.stoneCount").value(12))
                 .andExpect(jsonPath("$.data.dayIndex").value(13))
                 .andExpect(jsonPath("$.data.stonedToday").value(false));
+        // 내 정보 기록: 완성 돌탑 18개(첫 번째 소원 12 + 두 번째 소원 6), 방문 명소·엽서는 시드 기준
+        mockMvc.perform(as(demo, get("/api/v1/users/me")))
+                .andExpect(jsonPath("$.data.stats.towerCount").value(18))
+                .andExpect(jsonPath("$.data.stats.visitedSpotCount").value(
+                        count("SELECT COUNT(DISTINCT spot_id) FROM spot_visits WHERE user_id = ?", demo.getId())))
+                .andExpect(jsonPath("$.data.stats.postcardCount").value(14));
     }
 }

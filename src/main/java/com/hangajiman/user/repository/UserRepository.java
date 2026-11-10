@@ -43,6 +43,22 @@ public interface UserRepository extends JpaRepository<User, Long> {
             nativeQuery = true)
     boolean existsOpenWish(@Param("userId") Long userId);
 
+    // AUTH-04 내 정보 기록: 완성한 돌탑(30일이 끝난 것, 모아보기와 같은 기준), 방문 인증한 명소(곳 수), 모은 엽서
+    interface MyStats {
+        long getTowerCount();
+
+        long getVisitedSpotCount();
+
+        long getPostcardCount();
+    }
+
+    @Query(value = """
+            SELECT (SELECT COUNT(*) FROM wishes WHERE user_id = :userId AND status <> 'ACTIVE') AS towerCount,
+                   (SELECT COUNT(DISTINCT spot_id) FROM spot_visits WHERE user_id = :userId) AS visitedSpotCount,
+                   (SELECT COUNT(*) FROM postcards WHERE user_id = :userId) AS postcardCount
+            """, nativeQuery = true)
+    MyStats findMyStats(@Param("userId") Long userId);
+
     /**
      * 탈퇴 시 알림 정리. notifications.target_id는 FK가 없어서(CLAUDE.md 규칙 6) 서비스에서 직접 지웁니다.
      * 본인 알림, 본인이 보낸 알림, 본인이 쓴 응원을 가리키는 알림
