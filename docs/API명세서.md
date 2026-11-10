@@ -58,7 +58,7 @@
 | FRIEND-04 | POST | `/friends/{friendId}/nudge` | 콕 찌르기 |
 | FRIEND-05 | POST | `/wishes/{wishId}/anonymous-keeper` | 익명 소원지기 매칭 🟡 |
 | NOTI-01 | GET / PATCH | `/notifications`, `/notifications/{id}/read` | 알림 목록 📄 / 읽음 |
-| DEMO-01 | POST | `/demo/time-travel` | 시간 이동 (시연 전용). 실서버는 허용한 시연 계정만 자기 날짜를 이동, 다른 계정 403 DEMO_NOT_ALLOWED (11/9) |
+| DEMO-01 | POST | `/demo/time-travel` | 시간 이동 (시연 전용). 실서버는 허용한 계정들(시연 계정 + 친구 계정)이 한 묶음으로 함께 이동, 다른 계정 403 DEMO_NOT_ALLOWED (11/9·11/10) |
 | DEMO-01 | POST | `/demo/time-travel/reset` | 실제 날짜로 되돌리기 (실서버는 그 시연 계정만, 11/9) |
 | DEMO-03 | POST | `/demo/reset-scenario` | 시연 계정을 처음 세팅한 상태로 (날짜·기록, 친구 계정 포함) → 204. 시연 계정 본인만, `GET /users/me`의 canResetDemo (11/10) |
 

@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.hangajiman.global.config.DemoClock;
 import com.hangajiman.user.domain.User;
+import com.hangajiman.user.repository.UserRepository;
 
 /**
  * DEMO-03 시연 계정을 처음 세팅한 상태로 되돌립니다 (11/10).
@@ -25,11 +26,14 @@ public class DemoScenarioService {
     private final JdbcTemplate jdbcTemplate;
     private final DemoClock clock;
     private final TimeTravelPolicy policy;
+    private final UserRepository userRepository;
 
-    public DemoScenarioService(JdbcTemplate jdbcTemplate, DemoClock clock, TimeTravelPolicy policy) {
+    public DemoScenarioService(JdbcTemplate jdbcTemplate, DemoClock clock, TimeTravelPolicy policy,
+                               UserRepository userRepository) {
         this.jdbcTemplate = jdbcTemplate;
         this.clock = clock;
         this.policy = policy;
+        this.userRepository = userRepository;
     }
 
     // 내 정보에 "시연 처음 상태로" 버튼을 보여줄지: 시간 이동이 허용된 시연 계정 본인만
@@ -39,7 +43,9 @@ public class DemoScenarioService {
 
     @Transactional
     public void reset(User user) {
+        // 시간 이동 묶음(시연 계정 + 친구 계정) 모두 실제 날짜로
         clock.resetUser(user.getId());
+        userRepository.findByEmailIn(policy.allowedEmails()).forEach(member -> clock.resetUser(member.getId()));
         jdbcTemplate.execute(readSeed());
     }
 

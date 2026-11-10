@@ -2,6 +2,7 @@ package com.hangajiman.demo;
 
 import java.time.Duration;
 import java.time.OffsetDateTime;
+import java.util.List;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
@@ -29,7 +30,7 @@ import jakarta.validation.constraints.NotNull;
  * DEMO-01 시연용 시간 이동. local(개발)·demo(시연) 프로필에서만 등록되어 운영 서버에는 없습니다.
  * N일 앞당기고 30일 완성 처리·1년 회고 알림을 즉시 실행합니다. 재시작하면 원래 시간으로 돌아옵니다.
  * - 로컬(허용 계정 목록 없음): 서버 전체가 함께 이동
- * - 실서버(demo.time-travel.user-emails, 11/9): 허용된 시연 계정만 자기 날짜를 이동, 다른 계정은 403 DEMO_NOT_ALLOWED
+ * - 실서버(demo.time-travel.user-emails, 11/9): 허용된 계정들만 한 묶음으로 함께 이동(11/10), 다른 계정은 403 DEMO_NOT_ALLOWED
  */
 @Profile({"local", "demo"})
 @RestController
@@ -78,9 +79,13 @@ public class DemoController {
         Duration days = Duration.ofDays(request.days());
         if (policy.perUser()) {
             requireAllowed(userId);
-            clock.travelUser(userId, days); // 이 요청의 시계도 바로 새 날짜
-            towerCompletionService.completeExpiredFor(userId);
-            yearReviewService.notifyDueFor(userId);
+            // 묶음(허용 계정 전부)이 같은 날짜로 함께 이동. 이 요청의 시계도 바로 새 날짜
+            List<Long> group = groupIds();
+            group.forEach(id -> clock.travelUser(id, days));
+            group.forEach(id -> {
+                towerCompletionService.completeExpiredFor(id);
+                yearReviewService.notifyDueFor(id);
+            });
         } else {
             clock.travel(days);
             towerCompletionService.completeExpired();
@@ -94,11 +99,16 @@ public class DemoController {
     public ApiResponse<TimeTravelResponse> reset(@AuthenticationPrincipal Long userId) {
         if (policy.perUser()) {
             requireAllowed(userId);
-            clock.resetUser(userId);
+            groupIds().forEach(clock::resetUser);
         } else {
             clock.reset();
         }
         return ApiResponse.ok(new TimeTravelResponse(OffsetDateTime.now(clock)));
+    }
+
+    // 시간 이동을 함께 하는 계정들 (허용 목록의 가입한 계정)
+    private List<Long> groupIds() {
+        return userRepository.findByEmailIn(policy.allowedEmails()).stream().map(User::getId).toList();
     }
 
     private void requireAllowed(Long userId) {
