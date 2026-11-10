@@ -11,6 +11,7 @@
 --     세 번째 소원(진행 중): 백엔드 개발자로 취업하기, 13일째, 돌 12개, 오늘은 아직 안 쌓음, 문경새재 과거길 방문함, 친구 공개
 --     명소 방문 5곳(문경새재는 두 번), 엽서 14장(문경새재 4장 모두), 친구와 주고받은 엽서 4장 + 나에게 보낸 엽서 1장(안 읽은 받은 엽서 1장)
 --     소원 캘린더 할 일·소원 메모, 돌돌이의 응원 2개
+--   알림: 두 계정 모두 지우고, 소원지기에게 돌돌이의 안 읽은 엽서 알림 1개만
 --   친구 계정 돌돌이: 매일 30분 달리기, 9일째, 돌 9개, 오늘은 아직 안 쌓음(콕 찌르기 가능), 불국사·석굴암 방문함
 
 DO $$
@@ -51,7 +52,8 @@ BEGIN
 
   -- 두 계정의 기록만 비우기 (돌·방문에 딸린 엽서·응원은 돌탑·방문 삭제로 함께 지워짐)
   DELETE FROM postcard_letters WHERE sender_id IN (demo_id, friend_id) OR receiver_id IN (demo_id, friend_id);
-  DELETE FROM notifications WHERE user_id IN (demo_id, friend_id) AND type IN ('POSTCARD', 'CHEER', 'YEAR_REVIEW');
+  -- 알림은 종류 상관없이 모두 지우고 처음 세팅의 알림만 다시 만듦 (콕 찌르기 하루 1번 기록도 알림이라 같이 풀림)
+  DELETE FROM notifications WHERE user_id IN (demo_id, friend_id);
   DELETE FROM postcards WHERE user_id IN (demo_id, friend_id);
   DELETE FROM spot_visits WHERE user_id IN (demo_id, friend_id);
   DELETE FROM wishes WHERE user_id IN (demo_id, friend_id);
