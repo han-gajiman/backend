@@ -6,6 +6,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.hangajiman.demo.DemoScenarioService;
 import com.hangajiman.demo.TimeTravelPolicy;
 import com.hangajiman.global.exception.BusinessException;
 import com.hangajiman.global.exception.ErrorCode;
@@ -98,7 +99,8 @@ public class UserService {
                 user.getProvider(),
                 userRepository.existsOpenWish(userId),
                 letterRepository.existsByReceiverIdAndReadAtIsNull(userId),
-                timeTravelPolicy.canTravel(user)
+                timeTravelPolicy.canTravel(user),
+                timeTravelPolicy.canTravel(user) && DemoScenarioService.DEMO_EMAIL.equalsIgnoreCase(user.getEmail())
         );
     }
 

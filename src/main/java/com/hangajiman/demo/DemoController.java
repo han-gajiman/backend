@@ -4,6 +4,7 @@ import java.time.Duration;
 import java.time.OffsetDateTime;
 
 import org.springframework.context.annotation.Profile;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -40,14 +41,28 @@ public class DemoController {
     private final YearReviewService yearReviewService;
     private final TimeTravelPolicy policy;
     private final UserRepository userRepository;
+    private final DemoScenarioService scenarioService;
 
     public DemoController(DemoClock clock, TowerCompletionService towerCompletionService,
-                          YearReviewService yearReviewService, TimeTravelPolicy policy, UserRepository userRepository) {
+                          YearReviewService yearReviewService, TimeTravelPolicy policy, UserRepository userRepository,
+                          DemoScenarioService scenarioService) {
         this.clock = clock;
         this.towerCompletionService = towerCompletionService;
         this.yearReviewService = yearReviewService;
         this.policy = policy;
         this.userRepository = userRepository;
+        this.scenarioService = scenarioService;
+    }
+
+    // DEMO-03 POST /demo/reset-scenario → 204. 시연 계정을 처음 세팅한 상태로 (시연 계정 본인만, 아니면 403 DEMO_NOT_ALLOWED)
+    @PostMapping("/reset-scenario")
+    public ResponseEntity<Void> resetScenario(@AuthenticationPrincipal Long userId) {
+        User user = userId == null ? null : userRepository.findById(userId).orElse(null);
+        if (user == null || !scenarioService.canReset(user)) {
+            throw new BusinessException(ErrorCode.DEMO_NOT_ALLOWED);
+        }
+        scenarioService.reset(user);
+        return ResponseEntity.noContent().build();
     }
 
     public record TimeTravelRequest(@NotNull @Min(1) @Max(365) Integer days) {

@@ -12,6 +12,7 @@ public record MeResponse(
         SocialProvider provider,
         boolean hasActiveWish,
         boolean hasUnreadLetter, // 안 읽은 받은 엽서 (메인 우체통 깃발)
-        boolean canTimeTravel // 시연용 시간 이동 버튼을 보여줄지 (DEMO-01, 허용된 시연 계정만)
+        boolean canTimeTravel, // 시연용 시간 이동 버튼을 보여줄지 (DEMO-01, 허용된 시연 계정만)
+        boolean canResetDemo // 내 정보의 "시연 처음 상태로" 버튼 (DEMO-03, 시연 계정 본인만)
 ) {
 }

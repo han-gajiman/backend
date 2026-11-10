@@ -37,6 +37,8 @@ docker compose logs -f app               # "Started HangajimanApplication"이 �
 확인: 브라우저에서 `https://도메인/api/v1/spots`가 명소 목록 JSON을 보여주면 됩니다.
 
 ## 4. 시연 계정 기록 채우기
+앱의 내 정보 > **시연 처음 상태로** 버튼(시연 계정만)으로도 같은 일을 합니다. 파일 원본은 `src/main/resources/demo/seed-demo.sql`이고 `deploy/seed-demo.sql`은 그 링크입니다.
+
 `demo@hangajiman.app`(시연)과 `friend@hangajiman.app`(친구)을 회원가입·온보딩·친구 맺기까지 해 둔 뒤 실행합니다.
 지난 돌탑 14개, 진행 중 돌탑(13일째), 방문·엽서, 캘린더, 응원을 오늘 기준으로 만들고, 다시 실행하면 새로 만듭니다.
 ```bash
