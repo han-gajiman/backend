@@ -18,7 +18,9 @@ public final class SuggestionDtos {
 
     // spot: AI가 실패했거나 위험한 소원이면 null. fallback: 기본 문구를 썼는지
     // supportMessage: 위험한 소원이면 도움 안내 (그때 actionGoals는 비어 있음)
-    public record SuggestionResponse(List<String> actionGoals, SpotPick spot, boolean fallback, String supportMessage) {
+    // remaining: 오늘 남은 소원 추천 횟수 (이번 추천까지 뺀 값, 하루 10번)
+    public record SuggestionResponse(List<String> actionGoals, SpotPick spot, boolean fallback, String supportMessage,
+                                     int remaining) {
     }
 
     public record SpotPick(Long spotId, String spotName, String reason) {

@@ -64,24 +64,26 @@ public class WishSuggestionService {
     @Transactional
     public SuggestionResponse suggest(Long userId, String content) {
         Instant todayStart = LocalDate.now(clock).atStartOfDay(clock.getZone()).toInstant();
-        if (logRepository.countByUserIdAndKindAndCreatedAtGreaterThanEqual(userId, AiSuggestionLog.WISH, todayStart) >= DAILY_LIMIT) {
+        long used = logRepository.countByUserIdAndKindAndCreatedAtGreaterThanEqual(userId, AiSuggestionLog.WISH, todayStart);
+        if (used >= DAILY_LIMIT) {
             throw new BusinessException(ErrorCode.AI_RATE_LIMIT);
         }
         logRepository.save(new AiSuggestionLog(userId, AiSuggestionLog.WISH));
+        int remaining = (int) (DAILY_LIMIT - used - 1);
 
         String wish = content.trim();
         if (CRISIS_WORDS.stream().anyMatch(wish::contains)) {
-            return support();
+            return support(remaining);
         }
         List<Spot> spots = spotRepository.findAllByOrderByIdAsc();
         Optional<Suggestion> result = suggester.suggest(wish, spots);
         if (result.isPresent() && result.get().sensitive()) {
-            return support();
+            return support(remaining);
         }
-        return result.map(s -> toResponse(s, spots)).orElseGet(this::fallback);
+        return result.map(s -> toResponse(s, spots, remaining)).orElseGet(() -> fallback(remaining));
     }
 
-    private SuggestionResponse toResponse(Suggestion suggestion, List<Spot> spots) {
+    private SuggestionResponse toResponse(Suggestion suggestion, List<Spot> spots, int remaining) {
         List<String> goals = suggestion.actionGoals() == null ? List.of() : suggestion.actionGoals().stream()
                 .filter(g -> g != null && !g.isBlank())
                 .map(String::trim)
@@ -90,7 +92,7 @@ public class WishSuggestionService {
                 .limit(GOAL_COUNT)
                 .toList();
         if (goals.size() < GOAL_COUNT) {
-            return fallback();
+            return fallback(remaining);
         }
         Map<Long, Spot> byId = spots.stream().collect(Collectors.toMap(Spot::getId, Function.identity()));
         Spot spot = suggestion.spotId() == null ? null : byId.get(suggestion.spotId());
@@ -98,14 +100,14 @@ public class WishSuggestionService {
         SpotPick pick = spot == null || reason.isEmpty() || reason.length() > REASON_MAX_LENGTH
                 ? null
                 : new SpotPick(spot.getId(), spot.getName(), reason);
-        return new SuggestionResponse(goals, pick, false, null);
+        return new SuggestionResponse(goals, pick, false, null, remaining);
     }
 
-    private SuggestionResponse fallback() {
-        return new SuggestionResponse(DEFAULT_GOALS, null, true, null);
+    private SuggestionResponse fallback(int remaining) {
+        return new SuggestionResponse(DEFAULT_GOALS, null, true, null, remaining);
     }
 
-    private SuggestionResponse support() {
-        return new SuggestionResponse(List.of(), null, false, SUPPORT_MESSAGE);
+    private SuggestionResponse support(int remaining) {
+        return new SuggestionResponse(List.of(), null, false, SUPPORT_MESSAGE, remaining);
     }
 }

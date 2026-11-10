@@ -185,7 +185,8 @@
 { "content": "영어로 자연스럽게 대화하기" }
 → 200 { "actionGoals": ["매일 영어 문장 3개 소리 내어 읽기", "하루 10분 영어 영상 따라 말하기", "매일 영어로 일기 한 문장 쓰기"],
         "spot": { "spotId": 3, "spotName": "호미곶 해맞이광장", "reason": "새로운 나를 시작하는 소원이니, 해가 가장 먼저 뜨는 곳에서 다짐해 봐요." },
-        "fallback": false, "supportMessage": null }
+        "fallback": false, "supportMessage": null, "remaining": 9 }
+// remaining: 오늘 남은 소원 추천 횟수 (이번 추천까지 뺀 값). 기본 문구·도움 안내로 대체돼도 1번으로 셈
 
 // POST /wishes   진행 중 돌탑 있으면 409, 등록 후 수정 API 없음. 카테고리는 명소에서 파생
 { "content": "백엔드 개발자로 취업하기", "actionGoal": "매일 영어 단어 20개 외우기",
