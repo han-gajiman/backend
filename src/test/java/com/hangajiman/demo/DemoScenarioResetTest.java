@@ -98,7 +98,11 @@ class DemoScenarioResetTest {
         assertThat(count("SELECT COUNT(*) FROM postcards WHERE user_id = ?", demo.getId())).isEqualTo(14);
         assertThat(count("SELECT COUNT(*) FROM year_reviews WHERE user_id = ?", demo.getId())).isEqualTo(1);
         assertThat(count("SELECT COUNT(*) FROM notifications WHERE user_id = ?", friend.getId())).isZero();
-        assertThat(count("SELECT COUNT(*) FROM notifications WHERE user_id = ?", demo.getId())).isEqualTo(1); // 돌돌이의 안 읽은 엽서
+        // 돌돌이의 엽서·응원 2개·콕 찌르기
+        assertThat(count("SELECT COUNT(*) FROM notifications WHERE user_id = ?", demo.getId())).isEqualTo(4);
+        assertThat(count("SELECT COUNT(*) FROM notifications WHERE user_id = ? AND type = 'NUDGE'", demo.getId())).isEqualTo(1);
+        assertThat(count("SELECT COUNT(*) FROM notifications n JOIN cheers c ON c.id = n.target_id WHERE n.user_id = ? AND n.type = 'CHEER'",
+                demo.getId())).isEqualTo(2);
         mockMvc.perform(as(demo, get("/api/v1/wishes/current")))
                 .andExpect(jsonPath("$.data.stoneCount").value(12))
                 .andExpect(jsonPath("$.data.dayIndex").value(13))

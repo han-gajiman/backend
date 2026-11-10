@@ -161,10 +161,20 @@ BEGIN
     (demo_id, d + 3, '모의 면접 영상 보기', false);
   INSERT INTO wish_plans (user_id, content, start_date) VALUES (demo_id, '하프 마라톤 완주하기', d + 18);
 
-  -- 돌돌이의 응원
-  INSERT INTO cheers (wish_id, writer_id, message, is_anonymous, created_at) VALUES
-    (cur, friend_id, '오늘도 하나 쌓자! 취업 꼭 하자', false, now() - interval '2 days'),
-    (cur, friend_id, '영어 단어 벌써 2주째라니 대단해', false, now() - interval '3 hours');
+  -- 돌돌이의 응원 2개와 콕 찌르기 (알림함에 같이 보임. 오래된 응원은 읽음)
+  -- 콕 찌르기는 하루 전으로 둬서, 시연 중 돌돌이가 다시 콕 찌를 수 있게 함 (하루 1번 제한)
+  INSERT INTO cheers (wish_id, writer_id, message, is_anonymous, created_at)
+  VALUES (cur, friend_id, '오늘도 하나 쌓자! 취업 꼭 하자', false, now() - interval '2 days')
+  RETURNING id INTO v;
+  INSERT INTO notifications (user_id, actor_id, type, target_id, message, is_read, created_at)
+  VALUES (demo_id, friend_id, 'CHEER', v, '돌돌이님이 응원을 보냈어요.', true, now() - interval '2 days');
+  INSERT INTO notifications (user_id, actor_id, type, target_id, message, is_read, created_at)
+  VALUES (demo_id, friend_id, 'NUDGE', cur, '돌돌이님이 콕 찔렀어요! 오늘의 돌을 쌓아 보세요.', false, now() - interval '1 day');
+  INSERT INTO cheers (wish_id, writer_id, message, is_anonymous, created_at)
+  VALUES (cur, friend_id, '영어 단어 벌써 2주째라니 대단해', false, now() - interval '3 hours')
+  RETURNING id INTO v;
+  INSERT INTO notifications (user_id, actor_id, type, target_id, message, is_read, created_at)
+  VALUES (demo_id, friend_id, 'CHEER', v, '돌돌이님이 응원을 보냈어요.', false, now() - interval '3 hours');
 
   RAISE NOTICE '시연 계정 준비 완료: 소원지기 %, 진행 중 돌탑 % / 돌돌이 %, 돌탑 %', demo_id, cur, friend_id, fw;
 END $$;
