@@ -30,7 +30,7 @@ import com.hangajiman.wish.domain.WishStatus;
 import com.hangajiman.wish.repository.WishRepository;
 
 // DEMO-01 실서버 방식: 허용된 시연 계정만 자기 날짜를 이동하고, 다른 회원과 스케줄러는 실제 날짜 그대로
-@SpringBootTest(properties = "demo.time-travel.user-emails=stage@hangajiman.app")
+@SpringBootTest(properties = "demo.time-travel.user-emails=stage@hangajiman.app,partner@hangajiman.app")
 @AutoConfigureMockMvc
 @ActiveProfiles("local")
 @Transactional
@@ -52,11 +52,15 @@ class PerAccountTimeTravelTest {
     private DemoClock clock;
 
     private User stage;
+    private User partner;
 
     @AfterEach
     void resetClock() {
         if (stage != null) {
             clock.resetUser(stage.getId());
+        }
+        if (partner != null) {
+            clock.resetUser(partner.getId());
         }
         clock.reset();
     }
@@ -85,6 +89,7 @@ class PerAccountTimeTravelTest {
     @Test
     void onlyStageAccountMovesItsOwnDate() throws Exception {
         stage = user("stage@hangajiman.app", "시연");
+        partner = user("partner@hangajiman.app", "짝꿍");
         User other = user("other@hangajiman.app", "다른회원");
         Wish stageWish = activeWish(stage);
         Wish otherWish = activeWish(other);
@@ -111,5 +116,33 @@ class PerAccountTimeTravelTest {
 
         mockMvc.perform(as(stage, post("/api/v1/demo/time-travel/reset"))).andExpect(status().isOk());
         assertThat(today(stage)).isEqualTo(realToday);
+    }
+
+    @Test
+    void allowedAccountsMoveTogetherFromEitherSide() throws Exception {
+        stage = user("stage@hangajiman.app", "시연");
+        partner = user("partner@hangajiman.app", "짝꿍");
+        User other = user("other@hangajiman.app", "다른회원");
+        Wish partnerWish = activeWish(partner);
+        LocalDate real = LocalDate.now(clock);
+
+        mockMvc.perform(as(partner, get("/api/v1/users/me"))).andExpect(jsonPath("$.data.canTimeTravel").value(true));
+
+        // 시연 계정이 +1 → 짝꿍도 +1
+        mockMvc.perform(as(stage, post("/api/v1/demo/time-travel")).content("{\"days\": 1}")).andExpect(status().isOk());
+        assertThat(today(stage)).isEqualTo(real.plusDays(1).toString());
+        assertThat(today(partner)).isEqualTo(real.plusDays(1).toString());
+
+        // 짝꿍이 +30 → 둘 다 +31, 짝꿍 돌탑도 완성. 다른 회원은 그대로
+        mockMvc.perform(as(partner, post("/api/v1/demo/time-travel")).content("{\"days\": 30}")).andExpect(status().isOk());
+        assertThat(today(stage)).isEqualTo(real.plusDays(31).toString());
+        assertThat(today(partner)).isEqualTo(real.plusDays(31).toString());
+        assertThat(today(other)).isEqualTo(real.toString());
+        assertThat(wishRepository.findById(partnerWish.getId()).orElseThrow().getStatus()).isEqualTo(WishStatus.COMPLETED);
+
+        // 어느 쪽에서 되돌려도 둘 다 실제 날짜로
+        mockMvc.perform(as(partner, post("/api/v1/demo/time-travel/reset"))).andExpect(status().isOk());
+        assertThat(today(stage)).isEqualTo(real.toString());
+        assertThat(today(partner)).isEqualTo(real.toString());
     }
 }

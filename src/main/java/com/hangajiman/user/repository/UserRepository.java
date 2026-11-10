@@ -1,6 +1,7 @@
 package com.hangajiman.user.repository;
 
 import java.time.LocalDate;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -22,6 +23,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     // 자체 회원가입 시 이메일 중복 체크
     boolean existsByEmail(String email);
+
+    // DEMO-01 시간 이동을 함께 하는 시연 계정들
+    List<User> findByEmailIn(Collection<String> emails);
 
     // 아이디 찾기: 닉네임으로 가입한 이메일 회원
     List<User> findByProviderAndNicknameOrderByIdAsc(SocialProvider provider, String nickname);
