@@ -81,13 +81,13 @@ public class AuthService {
      * devKey가 같으면 같은 회원입니다. 카카오 회원번호 자리에 "dev-{devKey}"를 씁니다.
      */
     public LoginResponse loginForDev(String devKey) {
-        return login(SocialProvider.KAKAO, new SocialProfile("dev-" + devKey, null));
+        return login(SocialProvider.KAKAO, new SocialProfile("dev-" + devKey));
     }
 
     private LoginResponse login(SocialProvider provider, SocialProfile profile) {
         Optional<User> existing = userRepository.findByProviderAndProviderUserId(provider, profile.providerUserId());
         User user = existing.orElseGet(() -> userRepository.save(
-                User.create(provider, profile.providerUserId(), profile.profileImageUrl())));
+                User.create(provider, profile.providerUserId(), null)));
 
         TokenResponse tokens = issueTokens(user.getId());
         return new LoginResponse(tokens.accessToken(), tokens.refreshToken(), existing.isEmpty(), user.isOnboarded());

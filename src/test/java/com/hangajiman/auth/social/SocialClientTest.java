@@ -50,7 +50,6 @@ class SocialClientTest {
         SocialProfile profile = new KakaoClient(restClient, KAKAO, "").getProfile("kakao-token");
 
         assertThat(profile.providerUserId()).isEqualTo("3412345678");
-        assertThat(profile.profileImageUrl()).isEqualTo("https://k.kakaocdn.net/p.jpg");
     }
 
     @Test
@@ -139,7 +138,6 @@ class SocialClientTest {
                 .verifyIdToken("google-id-token");
 
         assertThat(profile.providerUserId()).isEqualTo("1098765");
-        assertThat(profile.profileImageUrl()).isEqualTo("https://lh3.googleusercontent.com/a.jpg");
     }
 
     @Test

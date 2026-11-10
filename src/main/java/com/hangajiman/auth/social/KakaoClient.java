@@ -54,8 +54,7 @@ public class KakaoClient {
         if (body == null || !body.hasNonNull("id")) {
             throw new BusinessException(ErrorCode.AUTH_SOCIAL_FAILED);
         }
-        String profileImageUrl = body.path("kakao_account").path("profile").path("profile_image_url").asText(null);
-        return new SocialProfile(body.get("id").asText(), profileImageUrl);
+        return new SocialProfile(body.get("id").asText()); // 회원번호만 (프로필 사진 등은 쓰지 않음)
     }
 
     // POST /v1/user/unlink — 탈퇴 시 연결 끊기. 실패해도 탈퇴는 진행합니다(로그만 남김).
