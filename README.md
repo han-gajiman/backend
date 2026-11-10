@@ -1,5 +1,7 @@
 # backend
 
+[![CI](https://github.com/han-gajiman/backend/actions/workflows/ci.yml/badge.svg)](https://github.com/han-gajiman/backend/actions/workflows/ci.yml)
+
 **한 가지만**(2026 단디톤 출품작)의 API 서버입니다. 소원 하나를 정하고, 30일 동안 매일 돌을 하나씩 쌓으며, 경북 명소를 방문해 이어가는 서비스입니다.
 
 - 실서비스 웹: https://han-gajiman.github.io (이 서버에 연결됨, API `https://hangajiman.duckdns.org/api/v1`)
@@ -22,7 +24,7 @@
 
 | 영역 | 기능 | 주요 API |
 | --- | --- | --- |
-| 회원 (AUTH) | 카카오·Google 로그인(앱 SDK, 웹은 로그인 화면을 거치는 방식), 이메일 회원가입·로그인, 아이디·비밀번호 찾기(메일 인증코드), 토큰 재발급·로그아웃, 온보딩(약관·닉네임), 닉네임 변경(회원끼리 중복 불가), 탈퇴(즉시 삭제) | `/auth/*`, `/users/me*` |
+| 회원 (AUTH) | 카카오·Google 로그인(앱 SDK, 웹은 로그인 화면을 거치는 방식), 이메일 회원가입·로그인, 아이디·비밀번호 찾기(메일 인증코드), 토큰 재발급·로그아웃, 온보딩(약관·닉네임), 내 정보(완성한 돌탑·방문한 명소·모은 엽서 수), 닉네임 변경(회원끼리 중복 불가), 탈퇴(즉시 삭제) | `/auth/*`, `/users/me*` |
 | 소원 (WISH) | 소원 + 실천 목표 등록(수정 불가, 진행 중 돌탑 1개), 공개 범위, AI 실천 목표 3개 + 명소 추천 | `/wishes`, `/wishes/current`, `/wishes/suggestions` |
 | 돌 (STONE) | 오늘의 돌(하루 1개, KST), 돌 목록, 쌓을 때 기록에 넣은 오늘 할 일 완료 체크 | `/wishes/{id}/stones` |
 | 돌탑 (TOWER) | 30일 완성 처리(매시간), 완성 회고, 1년 단위 모아보기, 1년 회고(첫 시작일 +365일마다 알림) | `/wishes/{id}/reflection`, `/wishes?round=`, `/wishes/rounds*` |
@@ -31,7 +33,7 @@
 | 친구 (FRIEND) | 초대 링크, 친구 목록과 돌탑 요약, 응원(100자), 콕 찌르기(하루 1회) | `/friends*`, `/wishes/{id}/cheers` |
 | 알림 (NOTI) | 알림함, 읽음, Expo 푸시 발송 | `/notifications*` |
 | 소원 캘린더 (PLAN) | 달력(돌탑·소원 메모·할 일), 날짜별 할 일(하루 5개), 앞으로 할 소원 메모, AI 할 일 추천(하루 10번) | `/plans/*` |
-| 시연 (DEMO) | 시연용 시간 이동, 시연 계정을 처음 세팅한 상태로 되돌리기 | `/demo/*` (`local`·`demo` 프로필만) |
+| 시연 (DEMO) | 시연용 시간 이동, 시연 계정을 처음 세팅한 상태로 되돌리기 (시연용 명소 인증은 앱에서 처리) | `/demo/*` (`local`·`demo` 프로필만) |
 
 - 온보딩 전에는 로그인·회원 API만 쓸 수 있고, 나머지는 `403 ONBOARDING_REQUIRED`입니다.
 - **위치정보는 받지 않습니다.** 방문 인증은 앱이 기기 안에서 반경을 확인하고, 서버에는 결과만 보냅니다.
@@ -57,6 +59,8 @@ createdb hangajiman_test   # 테스트용
 ./gradlew test                                               # 테스트 (hangajiman_test DB)
 curl localhost:8080/api/health                               # { "success": true, "data": { "status": "UP" } }
 ```
+
+GitHub Actions(`.github/workflows/ci.yml`)가 main에 푸시하거나 PR을 열 때마다 PostgreSQL 16을 띄워 전체 테스트를 실행합니다.
 
 `local` 프로필은 개발용 로그인, 서버 전체 시간 이동, `localhost` 모든 포트의 CORS를 켭니다.
 
